@@ -1,0 +1,1004 @@
+#!/usr/bin/python3
+#
+# A tool to manage a workspace of git repositories.
+#
+# Copyright (c) 2017-2018 Xevo Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+import argparse
+import errno
+import hashlib
+import logging
+import multiprocessing
+import os
+import shutil
+import subprocess
+import sys
+import yaml
+
+_LOG_FORMAT = '%(message)s'
+
+_BUILD_TYPES = ('debug', 'release')
+_VALID_CONFIG = {
+    'type': _BUILD_TYPES
+}
+
+# Keys that taint a build.
+_TAINT_KEYS = {'type'}
+
+_DRY_RUN = False
+def dry_run():
+    global _DRY_RUN
+    return _DRY_RUN
+
+def set_dry_run():
+    global _DRY_RUN
+    _DRY_RUN = True
+
+def bail(msg):
+    logging.error(msg)
+    sys.exit(1)
+
+def find_root():
+    path = os.path.realpath(os.getcwd())
+    while path != '/':
+        ws = os.path.join(path, '.ws')
+        if os.path.isdir(ws):
+            return ws
+        path = os.path.realpath(os.path.join(path, os.pardir))
+    return None
+
+def get_manifest_path(root):
+    parent = os.path.realpath(os.path.join(root, os.pardir))
+    return os.path.join(parent, '.repo', 'manifests', 'ws-manifest.yml')
+
+def get_ws_dir(root, ws):
+    return os.path.join(root, ws)
+
+def get_ws_config_path(ws):
+    return os.path.join(ws, 'config.yml')
+
+def get_ws_config(ws):
+    config = get_ws_config_path(ws)
+    with open(config, 'r') as f:
+        return yaml.load(f)
+
+def update_config(ws, config):
+    # Atomically update config.
+    config_path = get_ws_config_path(ws)
+    tmpfile = '%s.tmp' % config_path
+    with open(tmpfile, 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
+        os.fdatasync(f)
+    os.rename(tmpfile, config_path)
+
+def get_default_ws_name():
+    return 'default'
+
+def get_default_ws_link(root):
+    return os.path.join(root, get_default_ws_name())
+
+def get_checksum_dir(ws):
+    return os.path.join(ws, 'checksum')
+
+def get_checksum_file(ws, proj):
+    return os.path.join(get_checksum_dir(ws), proj)
+
+def get_source_dir(root, d, proj):
+    parent = os.path.realpath(os.path.join(root, os.pardir))
+    return os.path.join(parent, d[proj]['path'])
+
+def get_toplevel_build_dir(ws):
+    return os.path.join(ws, 'build')
+
+def get_proj_dir(ws, proj):
+    return os.path.join(get_toplevel_build_dir(ws), proj)
+
+def get_source_link(ws, proj):
+    return os.path.join(get_proj_dir(ws, proj), 'src')
+
+def get_build_dir(ws, proj):
+    return os.path.join(get_proj_dir(ws, proj), 'build')
+
+def get_install_dir(ws, proj):
+    return os.path.join(get_build_dir(ws, proj), 'install')
+
+_HOST_TRIPLET = None
+def get_host_triplet():
+    global _HOST_TRIPLET
+    if _HOST_TRIPLET is None:
+        _HOST_TRIPLET = call_output(['gcc', '-dumpmachine']).rstrip()
+    return _HOST_TRIPLET
+
+def get_lib_path(ws, proj):
+    host_triplet = get_host_triplet()
+    return os.path.join(get_install_dir(ws, proj), 'lib', host_triplet)
+
+def get_pkgconfig_path(ws, proj):
+    lib_path = get_lib_path(ws, proj)
+    return os.path.join(lib_path, 'pkgconfig')
+
+def get_shell():
+    try:
+        return os.environ['SHELL']
+    except KeyError:
+        # Default, should exist on all systems.
+        return '/bin/sh'
+
+def populate_init(parser):
+    parser.add_argument(
+        metavar='workspace',
+        dest='init_ws',
+        action='store',
+        default=None,
+        nargs='?',
+        help='Workspace to initialize')
+
+    parser.add_argument(
+        '-t', '--type',
+        action='store',
+        choices=_BUILD_TYPES,
+        default='debug',
+        help='Workspace type')
+
+def populate_remove(parser):
+    parser.add_argument(
+        metavar='workspace',
+        dest='remove_ws',
+        action='store',
+        help='Workspace to remove')
+    parser.add_argument(
+        '-d', '--default',
+        action='store',
+        default=None,
+        help='New default workspace')
+
+def do_remove(_, args):
+    ws_dir = get_ws_dir(args.root, args.remove_ws)
+    if not os.path.exists(ws_dir):
+        bail('workspace %s does not exist' % args.remove_ws)
+
+    if args.default is not None:
+        default_ws_dir = get_ws_dir(args.root, args.default)
+        if not os.path.exists(default_ws_dir):
+            bail('workspace %s does not exist' % args.default)
+
+    default_link = get_default_ws_link(args.root)
+    is_default = (os.readlink(default_link) == args.remove_ws)
+    if is_default:
+        # If the deleted workspace is the default, force the user to choose a
+        # new one.
+        if args.default is None:
+            bail('trying to remove the default workspace; must specify a new '
+                 'default via -d/--default')
+    elif args.default:
+        bail('-d/--default is not applicable unless you are removing the '
+             'default workspace')
+
+    # We are good to go.
+    shutil.rmtree(ws_dir)
+    if is_default:
+        os.unlink(default_link)
+        os.symlink(args.default, default_link)
+
+def parse_manifest(root):
+    # Parse.
+    path = get_manifest_path(root)
+    try:
+        with open(path, 'r') as f:
+            d = yaml.load(f)
+    except IOError:
+        bail('ws manifest %s not found; please run repo init.' % path)
+
+    # Validate.
+    required = {'build'}
+    optional = {'deps', 'env'}
+    total = required.union(optional)
+    for proj, props in d.items():
+        for prop in required:
+            if not prop in props:
+                bail('%s key missing from project %s in manifest' % (prop, proj))
+
+        for prop in props:
+            if prop not in total:
+                bail('unknown key %s for project %s specified in manifest'
+                    % (prop, proj))
+
+    # Add computed keys.
+    parent = os.path.realpath(os.path.join(root, os.pardir))
+    for proj, props in d.items():
+        if 'deps' in props:
+            if isinstance(props['deps'], str):
+                props['deps'] = (props['deps'],)
+            else:
+                props['deps'] = tuple(props['deps'])
+        else:
+            props['deps'] = tuple()
+
+        if 'env' in props:
+            if not isinstance(props['env'], dict):
+                bail('env key in project %s must be a dictionary' % proj)
+        else:
+            props['env'] = {}
+
+        props['path'] = os.path.join(parent, proj)
+        props['downstream'] = []
+
+    # Compute reverse-dependency list.
+    for proj, props in d.items():
+        deps = props['deps']
+        for dep in deps:
+            if dep not in d:
+                bail('Project %s dependency %s not found in the manifest'
+                    % (proj, dep))
+
+            # Reverse-dependency list of downstream projects.
+            d[dep]['downstream'].append(proj)
+
+        if len(set(deps)) != len(deps):
+            bail('Project %s has duplicate dependency' % proj)
+
+    return d
+
+def do_init(_, args):
+    if args.root is None:
+        root = '.ws'
+    else:
+        root = args.root
+
+    if args.init_ws is None:
+        ws = 'ws'
+    else:
+        ws = args.init_ws
+    ws_dir = get_ws_dir(root, ws)
+
+    if os.path.exists(ws_dir):
+        bail('Cannot initialize already existing workspace %s' % ws)
+
+    try:
+        os.mkdir(root)
+        new = True
+    except OSError as e:
+        new = False
+        if e.errno != errno.EEXIST:
+            raise
+
+    os.mkdir(ws_dir)
+
+    if new:
+        # This is a brand new .ws directory, so populate the initial
+        # directories.
+        link = get_default_ws_link(root)
+        os.symlink(ws, link)
+        os.mkdir(get_toplevel_build_dir(ws_dir))
+        os.mkdir(get_checksum_dir(ws_dir))
+        config = {
+            'type': args.type,
+            'taint': False
+        }
+        update_config(ws_dir, config)
+
+def populate_list(parser):
+    parser.add_argument(
+        '-w', '--workspaces',
+        action='store_true',
+        dest='list_workspaces',
+        default=False,
+        help='List workspaces instead of projects')
+
+def do_list(_, args):
+    if args.list_workspaces:
+        dirs = os.listdir(args.root)
+        for ws in dirs:
+            if ws != get_default_ws_name():
+                print(ws)
+    else:
+        d = parse_manifest(args.root)
+        for proj in d:
+            print(proj)
+
+def populate_rename(parser):
+    parser.add_argument(
+        metavar='old-workspace-name',
+        dest='old_ws',
+        action='store',
+        help='Old workspace name')
+    parser.add_argument(
+        metavar='new-workspace-name',
+        dest='new_ws',
+        action='store',
+        help='New workspace name')
+
+def do_rename(_, args):
+    old_ws_dir = get_ws_dir(args.root, args.old_ws)
+    if not os.path.exists(old_ws_dir):
+        bail('Workspace %s does not exist' % args.old_ws)
+
+    old_build_dir = get_toplevel_build_dir(old_ws_dir)
+    if len(os.listdir(old_build_dir)) > 0:
+        bail('cannot remove a workspace that contains build artifacts, as some '
+             'builds contain absolute paths and are thus not relocatable.'
+             'Please force-clean this workspace first and then rename it.')
+
+    new_ws_dir = get_ws_dir(args.root, args.new_ws)
+    if os.path.exists(new_ws_dir):
+        bail('Workspace %s already exists; please delete it first if you want '
+             'to do this rename' % args.new_ws)
+
+    os.rename(old_ws_dir, new_ws_dir)
+    default_link = get_default_ws_link(args.root)
+    if os.readlink(default_link) == args.old_ws:
+        os.unlink(default_link)
+        os.symlink(args.new_ws, default_link)
+
+def populate_default(parser):
+    parser.add_argument(
+        metavar='workspace',
+        dest='default_ws',
+        action='store',
+        default=None,
+        nargs='?',
+        help='Workspace to make the default')
+
+def do_default(_, args):
+    link = get_default_ws_link(args.root)
+    os.remove(link)
+
+    ws_dir = get_ws_dir(args.root, args.default_ws)
+    if not os.path.exists(ws_dir):
+        bail('Cannot make non-existent workspace %s the default' %
+             args.default_ws)
+
+    os.symlink(args.default_ws, link)
+
+def populate_config(parser):
+    parser.add_argument(
+        '-l', '--list',
+        action='store_true',
+        default=False,
+        help='List the current workspace config')
+    parser.add_argument(
+        'options',
+        action='store',
+        nargs='*',
+        help='Key-value options (format key=value')
+
+def do_config(ws, args):
+    config = get_ws_config(ws)
+    if args.list:
+        print(yaml.dump(config, default_flow_style=False), end='')
+        return
+
+    for arg in args.options:
+        split = arg.split('=')
+        if len(split) != 2:
+            bail('option argument %s invalid. format is key=value' % arg)
+        key, val = split
+        if key not in _VALID_CONFIG:
+            bail('unknown key %s' % key)
+        if val not in _VALID_CONFIG[key]:
+            bail('unknown value %s' % val)
+        if key == 'type' and config[key] != val:
+            config['taint'] = True
+        config[key] = val
+
+    update_config(ws, config)
+
+def populate_clean(parser):
+    parser.add_argument(
+        'projects',
+        action='store',
+        nargs='*',
+        help='Clean project(s)')
+    parser.add_argument(
+        '-f', '--force',
+        action='store_true',
+        default=False,
+        help='Force-clean (remove the build directory')
+
+def force_clean(ws, proj):
+    build_dir = get_build_dir(ws, proj)
+    logging.debug('removing %s' % build_dir)
+    if dry_run():
+        return
+    try:
+        shutil.rmtree(build_dir)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            logging.debug('%s already removed' % build_dir)
+        else:
+            raise
+
+    config = get_ws_config(ws)
+    config['taint'] = False
+    update_config(ws, config)
+
+def polite_clean(ws, proj, d):
+    build_props = get_build_props(proj, d)
+    build_dir = get_build_dir(ws, proj)
+    if not os.path.exists(build_dir):
+        return
+
+    build_env = get_build_env(ws, proj, d)
+    build_props['clean'](proj, build_dir, build_env)
+
+def clean(ws, proj, force, d):
+    invalidate_checksum(ws, proj)
+
+    if force:
+        force_clean(ws, proj)
+    else:
+        polite_clean(ws, proj, d)
+
+def do_clean(ws, args):
+    # Validate.
+    d = parse_manifest(args.root)
+    for project in args.projects:
+        if project not in d:
+            bail('unknown project %s' % project)
+
+    if len(args.projects) == 0:
+        projects = d.keys()
+    else:
+        projects = args.projects
+
+    for project in projects:
+        clean(ws, project, args.force, d)
+
+def populate_build(parser):
+    parser.add_argument(
+        'projects',
+        action='store',
+        nargs='*',
+        help='Build a particular project or projects')
+    parser.add_argument(
+        '-f', '--force',
+        action='store_true',
+        default=False,
+        help='Force a build')
+
+def dependency_closure(projects, d):
+    # This set is to detect circular dependencies.
+    processed = set()
+    def helper(project, d, order):
+        processed.add(project)
+        for dep in d[project]['deps']:
+            if dep not in order:
+                if dep in processed:
+                    bail('Projects %s and %s circularly depend on each other'
+                          % (project, dep))
+                helper(dep, d, order)
+        order.append(project)
+
+    order = []
+    for project in projects:
+        if project not in processed:
+            helper(project, d, order)
+    return tuple(order)
+
+def log_cmd(cmd):
+    logging.debug(' '.join(cmd))
+
+def call(cmd, env=None):
+    log_cmd(cmd)
+    if not dry_run():
+        subprocess.check_call(cmd, env=env)
+
+def call_output(cmd, env=None, text=True):
+    log_cmd(cmd)
+    if not dry_run():
+        out = subprocess.check_output(cmd, env=env)
+        if text:
+            out = out.decode('utf-8')
+        return out
+
+def call_git(repo, subcmd):
+    return call_output(('git', '-C', repo) + subcmd, text=False)
+
+def call_noexcept(op, cmd, **kwargs):
+    try:
+        call(cmd, **kwargs)
+    except subprocess.CalledProcessError:
+        return False
+    return True
+
+def call_configure(cmd, **kwargs):
+    return call_noexcept('configure', cmd, **kwargs)
+
+def call_build(cmd, **kwargs):
+    return call_noexcept('build', cmd, **kwargs)
+
+def call_clean(cmd, **kwargs):
+    return call_noexcept('clean', cmd, **kwargs)
+
+def conf_meson(proj, prefix, build_dir, source_dir, env, build_type):
+    cmd = (
+        'meson',
+        '--buildtype', build_type,
+        '--prefix', prefix,
+        build_dir,
+        source_dir)
+    return call_configure(cmd, env=env)
+
+def build_meson(proj, build_dir, env):
+    return call_build(('ninja', '-C', build_dir, 'install'), env=env)
+
+def clean_meson(proj, build_dir, env):
+    return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)
+
+def conf_cmake(proj, prefix, build_dir, env, build_type,):
+    cmd = (
+        'cmake',
+        '-DCMAKE_BUILD_TYPE', build_type,
+        '-DCMAKE_INSTALL_PREFIX', prefix,
+        build_dir,
+        source_dir)
+    return call_configure(cmd, env=env)
+
+def build_cmake(proj, build_dir, env):
+    cpu_count = multiprocessing.cpu_count()
+    return call_build(('make', '-j', cpu_count+1), env=env)
+
+def clean_cmake(proj, build_dir, env):
+    return call_clean(('make', '-C', build_dir, 'clean'), env=env)
+
+_BUILD_TOOLS = {
+    'meson': {
+        'configure': conf_meson,
+        'build': build_meson,
+        'clean': clean_meson
+    },
+    'cmake': {
+        'configure': conf_cmake,
+        'build': build_cmake,
+        'clean': clean_cmake
+    }
+}
+
+def get_build_props(project, d):
+    build = d[project]['build']
+    try:
+        build_props = _BUILD_TOOLS[build]
+    except KeyError:
+        bail('unknown build tool %s for project %s' % (build, project))
+
+    return build_props
+
+def calculate_checksum(source_dir):
+    # Collect the SHA-1 of HEAD and the diff of all dirty files.
+    #
+    # Note that it's very important to use the form "git diff HEAD" rather than
+    # "git diff" or "git diff --cached" because "git diff HEAD" collects ALL
+    # changes rather than just staged or unstaged changes.
+    #
+    # Additionally note the use of "submodule foreach --recursive", which will
+    # recursively diff all submodules, submodules-inside-submodules, etc. This
+    # ensures correctness even if deeply nested submodules change.
+    head = call_git(source_dir, ('rev-parse', '--verify', 'HEAD'))
+    repo_diff = call_git(source_dir,
+                         ('diff',
+                          'HEAD',
+                          '--diff-algorithm=myers',
+                          '--no-renames',
+                          '--submodule=short'))
+    submodule_diff = call_git(source_dir,
+                             ('submodule',
+                              'foreach',
+                              '--recursive',
+                              'git',
+                              'diff',
+                              'HEAD',
+                              '--diff-algorithm=myers',
+                              '--no-renames'))
+
+    if dry_run():
+        return 'bogus-calculated-checksum'
+
+    # Finally, combine all data into one master hash.
+    total = hashlib.sha1()
+    total.update(head)
+    total.update(repo_diff)
+    total.update(submodule_diff)
+
+    return total.hexdigest()
+
+def get_stored_checksum(ws, proj):
+    if dry_run():
+        return 'bogus-stored-checksum'
+
+    checksum_file = get_checksum_file(ws, proj)
+    try:
+        with open(checksum_file, 'r') as f:
+            checksum = f.read().rstrip()
+    except IOError:
+        return None
+
+    # Note that we don't need to check if the checksum is corrupt. If it is, it
+    # will not match the calculated checksum, so we will correctly see a stale
+    # checksum.
+
+    return checksum
+
+def set_stored_checksum(ws, proj, checksum):
+    # Note that we don't worry about atomically writing this. The worst cases
+    # are:
+    # - We crash or get power loss and have a partial write. This causes a
+    # corrupt checksum, which will not match the calculated checksum, be
+    # stale, and cause us to redo the build. But an incremental build system
+    # will cause this to have pretty low cost.
+    # - The checksum is never updated when it should have been. Again, we'll
+    # get a stale checksum and a rebuild, which shouldn't much hurt us.
+    checksum_file = get_checksum_file(ws, proj)
+    with open(checksum_file, 'w') as f:
+        f.write('%s\n' % checksum)
+
+def invalidate_checksum(ws, proj):
+    logging.debug('invalidating checksum for %s' % proj)
+    if dry_run():
+        return
+
+    try:
+        os.remove(get_checksum_file(ws, proj))
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
+def merge_var(var, entries, env):
+    prepend_str = ':'.join(entries)
+    try:
+        current_var = env[var]
+    except KeyError:
+        var = prepend_str
+    else:
+        var = '%s:%s' % (prepend_str, current_var)
+    return var
+
+def get_recursive_deps(d, proj):
+    deps = set()
+    queue = list(d[proj]['deps'])
+    while len(queue) > 0:
+        dep = queue.pop()
+        for subdep in d[dep]['deps']:
+            queue.append(subdep)
+        deps.add(dep)
+    return deps
+
+def get_build_env(ws, proj, d):
+    pkgconfig_path = []
+    ld_library_path = []
+    build_env = os.environ.copy()
+
+    deps = get_recursive_deps(d, proj)
+    for dep in deps:
+        pkgconfig_path.append(get_pkgconfig_path(ws, dep))
+        ld_library_path.append(get_lib_path(ws, dep))
+
+    build_env['PKG_CONFIG_PATH'] = merge_var(
+        'PKG_CONFIG_PATH',
+        pkgconfig_path,
+        build_env)
+    build_env['LD_LIBRARY_PATH'] = merge_var(
+        'LD_LIBRARY_PATH',
+        ld_library_path,
+        build_env)
+
+    lib_path = get_lib_path(ws, proj)
+    install_dir = get_install_dir(ws, proj)
+    for var, val in d[proj]['env'].items():
+        val = val.replace('${LIBDIR}', lib_path)
+        val = val.replace('${PREFIX}', install_dir)
+        build_env[var] = merge_var(
+            var,
+            [val],
+            build_env)
+
+    return build_env
+
+def build(root, ws, proj, d, ws_config, force):
+    source_dir = get_source_dir(root, d, proj)
+    current = calculate_checksum(source_dir)
+    if not force:
+        stored = get_stored_checksum(ws, proj)
+        if current == stored:
+            logging.debug('checksum for %s is current; skipping' % proj)
+            return True
+    else:
+        logging.debug('forcing a build of %s' % proj)
+
+    # Make the project directory if needed.
+    proj_dir = get_proj_dir(ws, proj)
+    try:
+        os.mkdir(proj_dir)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+    # Make the build directory if needed.
+    build_dir = get_build_dir(ws, proj)
+    needs_configure = os.path.exists(build_dir)
+    try:
+        os.mkdir(build_dir)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+        needs_configure = False
+    else:
+        needs_configure = True
+
+    # Populate the convenience source link.
+    source_link = get_source_link(ws, proj)
+    if not os.path.exists(source_link):
+        source_dir = get_source_dir(root, d, proj)
+        os.symlink(source_dir, source_link)
+
+    # Invalidate the checksums for any downstream projects.
+    for downstream_dep in d[proj]['downstream']:
+        invalidate_checksum(ws, downstream_dep)
+
+    # Add envs to find all projects on which this project is dependent.
+    build_env = get_build_env(ws, proj, d)
+
+    # Configure.
+    props = get_build_props(proj, d)
+    if needs_configure:
+        prefix = os.path.realpath(get_install_dir(ws, proj))
+        success = props['configure'](
+            proj,
+            prefix,
+            build_dir,
+            source_dir,
+            build_env,
+            ws_config['type'])
+        if not success:
+            # Remove the build directory if we failed so that we are forced to
+            # re-run configure next time.
+            shutil.rmtree(build_dir)
+            return False
+
+    # Build.
+    success = props['build'](proj, build_dir, build_env)
+    if success:
+        set_stored_checksum(ws, proj, current)
+
+    return success
+
+def do_build(ws, args):
+    ws_config = get_ws_config(get_ws_dir(args.root, ws))
+    if ws_config['taint']:
+        bail('Workspace is tainted from a config change; please do:\n'
+              'ws clean --force\n'
+              'And then build again')
+
+    d = parse_manifest(args.root)
+
+    # Validate.
+    for project in args.projects:
+        if project not in d:
+            bail('unknown project %s' % project)
+
+    if len(args.projects) == 0:
+        projects = d.keys()
+    else:
+        projects = args.projects
+
+    # Build in reverse-dependency order.
+    order = dependency_closure(projects, d)
+    for proj in order:
+        logging.info('Building %s' % proj)
+        success = build(args.root, ws, proj, d, ws_config, args.force)
+        if not success:
+            bail('%s build failed' % proj)
+
+def populate_env(parser):
+    parser.add_argument(
+        '-c', '--current-dir',
+        action='store',
+        default=None,
+        help='The directory from which the command will be run')
+    parser.add_argument(
+        'project',
+        action='store',
+        help='Enter the build environment for a particular project')
+    parser.add_argument(
+        'command',
+        action='store',
+        nargs=argparse.REMAINDER,
+        help='Command to run inside the given environment')
+
+def do_env(ws, args):
+    build_dir = get_build_dir(ws, args.project)
+    if not os.path.isdir(build_dir):
+        bail('build directory for %s doesn\"t exist; have you built it yet?'
+             % args.project)
+
+    d = parse_manifest(args.root)
+    build_env = get_build_env(ws, args.project, d)
+    build_env['PATH'] = merge_var('PATH', [build_dir], build_env)
+
+    if len(args.command) > 0:
+        cmd = args.command
+    else:
+        cmd = [get_shell()]
+        pwd = None
+
+    exe = os.path.basename(cmd[0])
+    if exe in ('bash', 'sh'):
+        suffix = '\\[\033[1;32m\\][ws-%s-env]\\[\033[m\\]$ ' % args.project
+        if exe == 'bash':
+            # Tweak the prompt to make it obvious we're in a special env.
+            cmd.insert(1, '--norc')
+            prompt = '\\u@\h:\w %s' % suffix
+        elif exe == 'sh':
+            # sh doesn't support \u and other codes.
+            prompt = suffix
+        build_env['PS1'] = prompt
+
+    logging.debug('execing with %s build environment: %s'
+        % (args.project, cmd))
+
+    if args.current_dir is None:
+        current_dir = get_build_dir(ws, args.project)
+    else:
+        current_dir = args.current_dir
+    os.chdir(current_dir)
+
+    os.execvpe(cmd[0], cmd, build_env)
+
+SUBCMDS = {
+    'init': {
+        'friendly': 'Initialize workspace with manifest',
+        'parse': populate_init,
+        'handler': do_init
+    },
+    'list': {
+        'friendly': 'List the available workspaces',
+        'parse': populate_list,
+        'handler': do_list
+    },
+    'rename': {
+        'friendly': 'Rename a workspace',
+        'parse': populate_rename,
+        'handler': do_rename
+    },
+    'remove': {
+        'friendly': 'Remove a workspace',
+        'parse': populate_remove,
+        'handler': do_remove
+    },
+    'default': {
+        'friendly': 'Set the default workspace',
+        'parse': populate_default,
+        'handler': do_default
+    },
+    'config': {
+        'friendly': 'Configure a workspace',
+        'parse': populate_config,
+        'handler': do_config
+    },
+    'clean': {
+        'friendly': 'Clean project or workspace',
+        'parse': populate_clean,
+        'handler': do_clean
+    },
+    'build': {
+        'friendly': 'Build project or workspace',
+        'parse': populate_build,
+        'handler': do_build
+    },
+    'env': {
+        'friendly': 'Run command in the workspace environment',
+        'parse': populate_env,
+        'handler': do_env
+    }
+}
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Manage workspaces')
+    parser.set_defaults(subcmd=None)
+    parser.add_argument(
+        '-r', '--root',
+        action='store',
+        required=False,
+        help=('Root workspace directory (.ws) to act on. If not specified, '
+        'will recursively try parent .ws directories.'))
+    parser.add_argument(
+        '-w', '--workspace',
+        action='store',
+        dest='ws',
+        required=False,
+        help='Name of the workspace inside the root on which to act')
+    parser.add_argument(
+        '-n', '--dry-run',
+        action='store_true',
+        default=False,
+        required=False,
+        help="Don't do anything; just print what would happen")
+    parser.add_argument(
+        '-d', '--debug',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Debug output')
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        default=False,
+        required=False,
+        help='Verbose output')
+
+    subparsers = parser.add_subparsers(help='subcommands')
+    for cmd, d in SUBCMDS.items():
+        subparser = subparsers.add_parser(cmd, help=d['friendly'])
+        d['parse'](subparser)
+        subparser.set_defaults(subcmd=cmd)
+
+    args = parser.parse_args()
+
+    if args.root is None:
+        args.root = find_root()
+        if args.root is None:
+            if args.subcmd != 'init':
+                bail("can't find .ws directory; please run %s init" % sys.argv[0])
+
+    if args.subcmd not in ('init', 'default', 'list', 'rename', 'remove'):
+        if args.ws is None:
+            args.ws = get_default_ws_link(args.root)
+        ws_dir = get_ws_dir(args.root, args.ws)
+        if not os.path.exists(ws_dir):
+            bail('workspace %s at %s does not exist.' % (args.ws, ws_dir))
+        if not os.path.exists(ws_dir):
+            bail('workspace at %s is not a directory.' % ws_dir)
+    else:
+        if args.ws is not None:
+            bail('cannot specify a top-level workspace with the %s subcmd'
+                 % args.subcmd)
+        ws_dir = None
+
+    if args.debug:
+        level = logging.DEBUG
+    elif args.verbose or args.dry_run:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
+
+    # Must remove old handlers first.
+    for handler in logging.root.handlers:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(format=_LOG_FORMAT, level=level)
+
+    if args.dry_run:
+        set_dry_run()
+
+    return args, parser, ws_dir
+
+def main():
+    _LOGGER = logging.basicConfig(format=_LOG_FORMAT, level=logging.WARNING)
+
+    args, parser, ws_dir = parse_args()
+    if args.subcmd is None:
+        parser.print_help()
+        return 1
+    handler = SUBCMDS[args.subcmd]['handler']
+    handler(ws_dir, args)
+
+if __name__ == '__main__':
+    status = main()
+    sys.exit(status)
