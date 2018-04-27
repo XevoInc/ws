@@ -533,22 +533,22 @@ def dependency_closure(d, projects):
     '''Returns the dependency closure for a list of projects. This is the set
     of dependencies of each project, dependencies of that project, and so
     on.'''
-    # This set is to detect circular dependencies.
+    # This set is for detecting circular dependencies.
+    order = []
     processed = set()
-    def helper(project, d, order):
+    def process(project):
         processed.add(project)
         for dep in d[project]['deps']:
             if dep not in order:
                 if dep in processed:
                     bail('Projects %s and %s circularly depend on each other'
                           % (project, dep))
-                helper(dep, d, order)
+                process(dep)
         order.append(project)
 
-    order = []
     for project in projects:
         if project not in processed:
-            helper(project, d, order)
+            process(project)
     return tuple(order)
 
 def log_cmd(cmd):
