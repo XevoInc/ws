@@ -529,7 +529,7 @@ def populate_build(parser):
         default=False,
         help='Force a build')
 
-def dependency_closure(projects, d):
+def dependency_closure(d, projects):
     '''Returns the dependency closure for a list of projects. This is the set
     of dependencies of each project, dependencies of that project, and so
     on.'''
@@ -908,7 +908,7 @@ def do_build(ws, args):
         projects = args.projects
 
     # Build in reverse-dependency order.
-    order = dependency_closure(projects, d)
+    order = dependency_closure(d, projects)
     for proj in order:
         logging.info('Building %s' % proj)
         success = build(args.root, ws, proj, d, ws_config, args.force)
