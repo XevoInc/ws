@@ -773,18 +773,6 @@ def merge_var(var, entries, env):
         var = '%s:%s' % (prepend_str, current_var)
     return var
 
-def get_recursive_deps(d, proj):
-    '''Returns all dependencies for a given project, recursively including
-    dependencies of dependencies and so on.'''
-    deps = set()
-    queue = list(d[proj]['deps'])
-    while len(queue) > 0:
-        dep = queue.pop()
-        for subdep in d[dep]['deps']:
-            queue.append(subdep)
-        deps.add(dep)
-    return deps
-
 def get_build_env(ws, proj, d):
     '''Gets the environment that should be set during builds (and for the env
     command) for a given project.'''
@@ -792,7 +780,7 @@ def get_build_env(ws, proj, d):
     ld_library_path = []
     build_env = os.environ.copy()
 
-    deps = get_recursive_deps(d, proj)
+    deps = dependency_closure(d, [proj])
     for dep in deps:
         pkgconfig_path.append(get_pkgconfig_path(ws, dep))
         ld_library_path.append(get_lib_path(ws, dep))
