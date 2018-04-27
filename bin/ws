@@ -555,12 +555,12 @@ def log_cmd(cmd):
     '''Logs a given command being run.'''
     logging.debug(' '.join(cmd))
 
-def call(cmd, env=None):
+def call(cmd, **kwargs):
     '''Calls a given command with the given environment, swallowing the
     output.'''
     log_cmd(cmd)
     if not dry_run():
-        subprocess.check_call(cmd, env=env)
+        subprocess.check_call(cmd, **kwargs)
 
 def call_output(cmd, env=None, text=True):
     '''Calls a given command with the given environment, returning the
