@@ -46,18 +46,23 @@ _TAINT_KEYS = {'type'}
 
 _DRY_RUN = False
 def dry_run():
+    '''Retrieves the current dry run setting.'''
     global _DRY_RUN
     return _DRY_RUN
 
 def set_dry_run():
+    '''Sets whether or not to use dry run mode.'''
     global _DRY_RUN
     _DRY_RUN = True
 
 def bail(msg):
+    '''Writes an error message and quits (fatal error).'''
     logging.error(msg)
     sys.exit(1)
 
 def find_root():
+    '''Recursively looks up in the directory hierarchy for a directory named
+    .ws, and returns the first one found, or None if one was not found.'''
     path = os.path.realpath(os.getcwd())
     while path != '/':
         ws = os.path.join(path, '.ws')
@@ -67,22 +72,31 @@ def find_root():
     return None
 
 def get_manifest_path(root):
+    '''Returns the path to the ws manifest.'''
     parent = os.path.realpath(os.path.join(root, os.pardir))
     return os.path.join(parent, '.repo', 'manifests', 'ws-manifest.yml')
 
 def get_ws_dir(root, ws):
+    '''Returns the ws directory, given a directory obtained using
+    find_root().'''
     return os.path.join(root, ws)
 
 def get_ws_config_path(ws):
+    '''Returns the ws internal config file, used for tracking the state of the
+    workspace.'''
     return os.path.join(ws, 'config.yml')
 
 def get_ws_config(ws):
+    '''Parses the current workspace config, returning a dictionary of the
+    state.'''
     config = get_ws_config_path(ws)
     with open(config, 'r') as f:
         return yaml.load(f)
 
 def update_config(ws, config):
-    # Atomically update config.
+    '''Atomically updates the current ws config using the standard trick of
+    writing to a tmp file in the same filesystem, syncing that file, and
+    renaming it to replace the current contents.'''
     config_path = get_ws_config_path(ws)
     tmpfile = '%s.tmp' % config_path
     with open(tmpfile, 'w') as f:
@@ -91,52 +105,71 @@ def update_config(ws, config):
     os.rename(tmpfile, config_path)
 
 def get_default_ws_name():
+    '''Returns the name of the default workspace (the one you get when you
+    don't explicitly give your workspace a name.'''
     return 'default'
 
 def get_default_ws_link(root):
+    '''Returns a path to the symlink that points to the current workspace.'''
     return os.path.join(root, get_default_ws_name())
 
 def get_checksum_dir(ws):
+    '''Returns the directory containing project build checksums.'''
     return os.path.join(ws, 'checksum')
 
 def get_checksum_file(ws, proj):
+    '''Returns the file containing the checksum for a given project.'''
     return os.path.join(get_checksum_dir(ws), proj)
 
 def get_source_dir(root, d, proj):
+    '''Returns the source code directory for a given project.'''
     parent = os.path.realpath(os.path.join(root, os.pardir))
     return os.path.join(parent, d[proj]['path'])
 
 def get_toplevel_build_dir(ws):
+    '''Returns the top-level directotory containing build artifacts for all
+    projects.'''
     return os.path.join(ws, 'build')
 
 def get_proj_dir(ws, proj):
+    '''Returns the root directory for a given project.'''
     return os.path.join(get_toplevel_build_dir(ws), proj)
 
 def get_source_link(ws, proj):
+    '''Returns a path to the symlink inside the project directory that points
+    back into the active source code (the code that the git-repo tool
+    manages).'''
     return os.path.join(get_proj_dir(ws, proj), 'src')
 
 def get_build_dir(ws, proj):
+    '''Returns the build directory for a given project.'''
     return os.path.join(get_proj_dir(ws, proj), 'build')
 
 def get_install_dir(ws, proj):
+    '''Returns the install directory for a given project (the directory we use
+    for --prefix and similar arguments.'''
     return os.path.join(get_build_dir(ws, proj), 'install')
 
 _HOST_TRIPLET = None
 def get_host_triplet():
+    '''Gets the GCC host triplet for the current machine.'''
     global _HOST_TRIPLET
     if _HOST_TRIPLET is None:
         _HOST_TRIPLET = call_output(['gcc', '-dumpmachine']).rstrip()
     return _HOST_TRIPLET
 
 def get_lib_path(ws, proj):
+    '''Gets the path to installed libraries for a project.'''
     host_triplet = get_host_triplet()
     return os.path.join(get_install_dir(ws, proj), 'lib', host_triplet)
 
 def get_pkgconfig_path(ws, proj):
+    '''Gets the path to the .pc files for a project.'''
     lib_path = get_lib_path(ws, proj)
     return os.path.join(lib_path, 'pkgconfig')
 
 def get_shell():
+    '''Gets the current default shell.'''
     try:
         return os.environ['SHELL']
     except KeyError:
@@ -144,6 +177,7 @@ def get_shell():
         return '/bin/sh'
 
 def populate_init(parser):
+    '''Populates the argument parser for the init subcmd.'''
     parser.add_argument(
         metavar='workspace',
         dest='init_ws',
@@ -160,6 +194,7 @@ def populate_init(parser):
         help='Workspace type')
 
 def populate_remove(parser):
+    '''Populates the argument parser for the remove subcmd.'''
     parser.add_argument(
         metavar='workspace',
         dest='remove_ws',
@@ -172,6 +207,7 @@ def populate_remove(parser):
         help='New default workspace')
 
 def do_remove(_, args):
+    '''Executes the remove subcmd.'''
     ws_dir = get_ws_dir(args.root, args.remove_ws)
     if not os.path.exists(ws_dir):
         bail('workspace %s does not exist' % args.remove_ws)
@@ -200,6 +236,7 @@ def do_remove(_, args):
         os.symlink(args.default, default_link)
 
 def parse_manifest(root):
+    '''Parses the ws manifest, returning a dictionary of the manifest data.'''
     # Parse.
     path = get_manifest_path(root)
     try:
@@ -259,6 +296,7 @@ def parse_manifest(root):
     return d
 
 def do_init(_, args):
+    '''Executes the init subcmd.'''
     if args.root is None:
         root = '.ws'
     else:
@@ -297,6 +335,7 @@ def do_init(_, args):
         update_config(ws_dir, config)
 
 def populate_list(parser):
+    '''Populates the argument parser for the list subcmd.'''
     parser.add_argument(
         '-w', '--workspaces',
         action='store_true',
@@ -305,6 +344,7 @@ def populate_list(parser):
         help='List workspaces instead of projects')
 
 def do_list(_, args):
+    '''Executes the list subcmd.'''
     if args.list_workspaces:
         dirs = os.listdir(args.root)
         for ws in dirs:
@@ -316,6 +356,7 @@ def do_list(_, args):
             print(proj)
 
 def populate_rename(parser):
+    '''Populates the argument parser for the rename subcmd.'''
     parser.add_argument(
         metavar='old-workspace-name',
         dest='old_ws',
@@ -328,6 +369,7 @@ def populate_rename(parser):
         help='New workspace name')
 
 def do_rename(_, args):
+    '''Executes the rename subcmd.'''
     old_ws_dir = get_ws_dir(args.root, args.old_ws)
     if not os.path.exists(old_ws_dir):
         bail('Workspace %s does not exist' % args.old_ws)
@@ -350,6 +392,7 @@ def do_rename(_, args):
         os.symlink(args.new_ws, default_link)
 
 def populate_default(parser):
+    '''Populates the argument parser for the default subcmd.'''
     parser.add_argument(
         metavar='workspace',
         dest='default_ws',
@@ -359,6 +402,7 @@ def populate_default(parser):
         help='Workspace to make the default')
 
 def do_default(_, args):
+    '''Executes the default subcmd.'''
     link = get_default_ws_link(args.root)
     os.remove(link)
 
@@ -370,6 +414,7 @@ def do_default(_, args):
     os.symlink(args.default_ws, link)
 
 def populate_config(parser):
+    '''Populates the argument parser for the config subcmd.'''
     parser.add_argument(
         '-l', '--list',
         action='store_true',
@@ -382,6 +427,7 @@ def populate_config(parser):
         help='Key-value options (format key=value')
 
 def do_config(ws, args):
+    '''Executes the config subcmd.'''
     config = get_ws_config(ws)
     if args.list:
         print(yaml.dump(config, default_flow_style=False), end='')
@@ -403,6 +449,7 @@ def do_config(ws, args):
     update_config(ws, config)
 
 def populate_clean(parser):
+    '''Populates the argument parser for the clean subcmd.'''
     parser.add_argument(
         'projects',
         action='store',
@@ -415,6 +462,8 @@ def populate_clean(parser):
         help='Force-clean (remove the build directory')
 
 def force_clean(ws, proj):
+    '''Performs a force-clean of a project, removing all files instead of
+    politely calling the clean function of the underlying build system.'''
     build_dir = get_build_dir(ws, proj)
     logging.debug('removing %s' % build_dir)
     if dry_run():
@@ -432,6 +481,8 @@ def force_clean(ws, proj):
     update_config(ws, config)
 
 def polite_clean(ws, proj, d):
+    '''Performs a polite-clean of a project, calling the underlying build
+    system of a project and asking it to clean itself.'''
     build_props = get_build_props(proj, d)
     build_dir = get_build_dir(ws, proj)
     if not os.path.exists(build_dir):
@@ -441,6 +492,7 @@ def polite_clean(ws, proj, d):
     build_props['clean'](proj, build_dir, build_env)
 
 def clean(ws, proj, force, d):
+    '''Cleans a project, forcefully or not.'''
     invalidate_checksum(ws, proj)
 
     if force:
@@ -449,6 +501,7 @@ def clean(ws, proj, force, d):
         polite_clean(ws, proj, d)
 
 def do_clean(ws, args):
+    '''Executes the clean subcmd.'''
     # Validate.
     d = parse_manifest(args.root)
     for project in args.projects:
@@ -464,6 +517,7 @@ def do_clean(ws, args):
         clean(ws, project, args.force, d)
 
 def populate_build(parser):
+    '''Populates the argument parser for the build subcmd.'''
     parser.add_argument(
         'projects',
         action='store',
@@ -476,6 +530,9 @@ def populate_build(parser):
         help='Force a build')
 
 def dependency_closure(projects, d):
+    '''Returns the dependency closure for a list of projects. This is the set
+    of dependencies of each project, dependencies of that project, and so
+    on.'''
     # This set is to detect circular dependencies.
     processed = set()
     def helper(project, d, order):
@@ -495,14 +552,19 @@ def dependency_closure(projects, d):
     return tuple(order)
 
 def log_cmd(cmd):
+    '''Logs a given command being run.'''
     logging.debug(' '.join(cmd))
 
 def call(cmd, env=None):
+    '''Calls a given command with the given environment, swallowing the
+    output.'''
     log_cmd(cmd)
     if not dry_run():
         subprocess.check_call(cmd, env=env)
 
 def call_output(cmd, env=None, text=True):
+    '''Calls a given command with the given environment, returning the
+    output. Note that we assume the output is UTF-8.'''
     log_cmd(cmd)
     if not dry_run():
         out = subprocess.check_output(cmd, env=env)
@@ -511,9 +573,13 @@ def call_output(cmd, env=None, text=True):
         return out
 
 def call_git(repo, subcmd):
+    '''Executes a git command in a given repository.'''
     return call_output(('git', '-C', repo) + subcmd, text=False)
 
 def call_noexcept(op, cmd, **kwargs):
+    '''Calls a given command, swallowing output, and returns False if the
+    command failed. Normally, we would just crash with an exeception. This
+    should be used for commands that are allowed to fail in a normal case.'''
     try:
         call(cmd, **kwargs)
     except subprocess.CalledProcessError:
@@ -521,15 +587,19 @@ def call_noexcept(op, cmd, **kwargs):
     return True
 
 def call_configure(cmd, **kwargs):
+    '''Executes a configure command.'''
     return call_noexcept('configure', cmd, **kwargs)
 
 def call_build(cmd, **kwargs):
+    '''Executes a build command.'''
     return call_noexcept('build', cmd, **kwargs)
 
 def call_clean(cmd, **kwargs):
+    '''Executes a clean command.'''
     return call_noexcept('clean', cmd, **kwargs)
 
 def conf_meson(proj, prefix, build_dir, source_dir, env, build_type):
+    '''Calls configure using the Meson build itself.'''
     cmd = (
         'meson',
         '--buildtype', build_type,
@@ -539,12 +609,15 @@ def conf_meson(proj, prefix, build_dir, source_dir, env, build_type):
     return call_configure(cmd, env=env)
 
 def build_meson(proj, build_dir, env):
+    '''Calls build using the Meson build itself.'''
     return call_build(('ninja', '-C', build_dir, 'install'), env=env)
 
 def clean_meson(proj, build_dir, env):
+    '''Calls clean using the Meson build itself.'''
     return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)
 
 def conf_cmake(proj, prefix, build_dir, env, build_type,):
+    '''Calls configure using CMake.'''
     cmd = (
         'cmake',
         '-DCMAKE_BUILD_TYPE', build_type,
@@ -554,12 +627,17 @@ def conf_cmake(proj, prefix, build_dir, env, build_type,):
     return call_configure(cmd, env=env)
 
 def build_cmake(proj, build_dir, env):
+    '''Calls build using CMake.'''
     cpu_count = multiprocessing.cpu_count()
     return call_build(('make', '-j', cpu_count+1), env=env)
 
 def clean_cmake(proj, build_dir, env):
+    '''Calls clean using CMake.'''
     return call_clean(('make', '-C', build_dir, 'clean'), env=env)
 
+# These hooks contain functions to handle the build tasks for each build system
+# we support. To add a new build system, add a new entry and supply the correct
+# hooks.
 _BUILD_TOOLS = {
     'meson': {
         'configure': conf_meson,
@@ -574,6 +652,8 @@ _BUILD_TOOLS = {
 }
 
 def get_build_props(project, d):
+    '''Returns the build properties for a given project. This function should
+    be used instead of directly referencing _BUILD_TOOLS.'''
     build = d[project]['build']
     try:
         build_props = _BUILD_TOOLS[build]
@@ -583,6 +663,19 @@ def get_build_props(project, d):
     return build_props
 
 def calculate_checksum(source_dir):
+    '''Calculates and returns the SHA-1 checksum of a given git directory,
+    including submodules and dirty files. This function should uniquely
+    identify any source code that would impact the build but ignores files in
+    .gitignore, as they are assumed to have no impact on the build. If this is
+    not the case, it is likely a bug in the underlying project. Although we
+    could use the find command instead of git, it is much slower and takes into
+    account inconsequential files, like .cscope or .vim files that don't change
+    the build (and that are typically put in .gitignore).
+
+    It is very important that this function is both fast and accurate, as it is
+    used to determine when projects need to be rebuilt, and thus gets run
+    frequently. If this function gets too slow, working with ws will become
+    painful. If this function is not accurate, then ws will have build bugs.'''
     # Collect the SHA-1 of HEAD and the diff of all dirty files.
     #
     # Note that it's very important to use the form "git diff HEAD" rather than
@@ -621,6 +714,9 @@ def calculate_checksum(source_dir):
     return total.hexdigest()
 
 def get_stored_checksum(ws, proj):
+    '''Retrieves the currently stored checksum for a given project, or None if
+    there is no checksum (either because the project was cleaned, or because
+    we've never built the project before).'''
     if dry_run():
         return 'bogus-stored-checksum'
 
@@ -638,6 +734,8 @@ def get_stored_checksum(ws, proj):
     return checksum
 
 def set_stored_checksum(ws, proj, checksum):
+    '''Sets the stored project checksum. This should be called after building
+    the project.'''
     # Note that we don't worry about atomically writing this. The worst cases
     # are:
     # - We crash or get power loss and have a partial write. This causes a
@@ -651,6 +749,8 @@ def set_stored_checksum(ws, proj, checksum):
         f.write('%s\n' % checksum)
 
 def invalidate_checksum(ws, proj):
+    '''Invalidates the current project checksum. This can be used to force a
+    project to rebuild, for example if one of its dependencies rebuilds.'''
     logging.debug('invalidating checksum for %s' % proj)
     if dry_run():
         return
@@ -662,6 +762,8 @@ def invalidate_checksum(ws, proj):
             raise
 
 def merge_var(var, entries, env):
+    '''Merges two variables together with ":" syntax. This can be used to join
+    LD_LIBRARY_PATH and similar variables.'''
     prepend_str = ':'.join(entries)
     try:
         current_var = env[var]
@@ -672,6 +774,8 @@ def merge_var(var, entries, env):
     return var
 
 def get_recursive_deps(d, proj):
+    '''Returns all dependencies for a given project, recursively including
+    dependencies of dependencies and so on.'''
     deps = set()
     queue = list(d[proj]['deps'])
     while len(queue) > 0:
@@ -682,6 +786,8 @@ def get_recursive_deps(d, proj):
     return deps
 
 def get_build_env(ws, proj, d):
+    '''Gets the environment that should be set during builds (and for the env
+    command) for a given project.'''
     pkgconfig_path = []
     ld_library_path = []
     build_env = os.environ.copy()
@@ -713,6 +819,7 @@ def get_build_env(ws, proj, d):
     return build_env
 
 def build(root, ws, proj, d, ws_config, force):
+    '''Builds a given project.'''
     source_dir = get_source_dir(root, d, proj)
     current = calculate_checksum(source_dir)
     if not force:
@@ -781,6 +888,7 @@ def build(root, ws, proj, d, ws_config, force):
     return success
 
 def do_build(ws, args):
+    '''Executes the build subcmd.'''
     ws_config = get_ws_config(get_ws_dir(args.root, ws))
     if ws_config['taint']:
         bail('Workspace is tainted from a config change; please do:\n'
@@ -808,6 +916,7 @@ def do_build(ws, args):
             bail('%s build failed' % proj)
 
 def populate_env(parser):
+    '''Populates the argument parser for the env subcmd.'''
     parser.add_argument(
         '-c', '--current-dir',
         action='store',
@@ -824,6 +933,7 @@ def populate_env(parser):
         help='Command to run inside the given environment')
 
 def do_env(ws, args):
+    '''Executes the env subcmd.'''
     build_dir = get_build_dir(ws, args.project)
     if not os.path.isdir(build_dir):
         bail('build directory for %s doesn\"t exist; have you built it yet?'
@@ -862,6 +972,9 @@ def do_env(ws, args):
 
     os.execvpe(cmd[0], cmd, build_env)
 
+# This dictionary gives the list of available subcmds. Each subcmd must supply
+# a populate hook, which populates its arguments in the argument parser, and a
+# do hook, which actually executes the subcmd given parsed arguments.
 SUBCMDS = {
     'init': {
         'friendly': 'Initialize workspace with manifest',
@@ -911,6 +1024,8 @@ SUBCMDS = {
 }
 
 def parse_args():
+    '''Parses the command-line arguments, returning the arguments, the argument
+    parser, and the workspace directory to use.'''
     parser = argparse.ArgumentParser(description='Manage workspaces')
     parser.set_defaults(subcmd=None)
     parser.add_argument(
@@ -990,6 +1105,7 @@ def parse_args():
     return args, parser, ws_dir
 
 def main():
+    '''Entrypoint.'''
     _LOGGER = logging.basicConfig(format=_LOG_FORMAT, level=logging.WARNING)
 
     args, parser, ws_dir = parse_args()
