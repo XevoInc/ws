@@ -827,17 +827,17 @@ def invalidate_checksum(ws, proj):
             raise
 
 
-def merge_var(var, entries, env):
-    '''Merges two variables together with ":" syntax. This can be used to join
-    LD_LIBRARY_PATH and similar variables.'''
-    prepend_str = ':'.join(entries)
+def merge_var(env, var, val):
+    '''Merges the given value into the given environment variable using ":"
+    syntax. This can be used to add an entry to LD_LIBRARY_PATH and other such
+    environment variables.'''
     try:
-        current_var = env[var]
+        current = env[var]
     except KeyError:
-        var = prepend_str
+        entries = val
     else:
-        var = '%s:%s' % (prepend_str, current_var)
-    return var
+        entries = current.split(':') + val
+    env[var] = ':'.join(entries)
 
 
 def get_build_env(ws, proj, d):
@@ -852,24 +852,15 @@ def get_build_env(ws, proj, d):
         pkgconfig_path.append(get_pkgconfig_path(ws, dep))
         ld_library_path.append(get_lib_path(ws, dep))
 
-    build_env['PKG_CONFIG_PATH'] = merge_var(
-        'PKG_CONFIG_PATH',
-        pkgconfig_path,
-        build_env)
-    build_env['LD_LIBRARY_PATH'] = merge_var(
-        'LD_LIBRARY_PATH',
-        ld_library_path,
-        build_env)
+    merge_var(build_env, 'PKG_CONFIG_PATH', pkgconfig_path)
+    merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
 
     lib_path = get_lib_path(ws, proj)
     install_dir = get_install_dir(ws, proj)
     for var, val in d[proj]['env'].items():
         val = val.replace('${LIBDIR}', lib_path)
         val = val.replace('${PREFIX}', install_dir)
-        build_env[var] = merge_var(
-            var,
-            [val],
-            build_env)
+        merge_var(build_env, var, [val])
 
     return build_env
 
@@ -1000,7 +991,7 @@ def do_env(ws, args):
 
     d = parse_manifest(args.root)
     build_env = get_build_env(ws, args.project, d)
-    build_env['PATH'] = merge_var('PATH', [build_dir], build_env)
+    build_env['PATH'] = merge_var(build_env, 'PATH', [build_dir])
 
     if len(args.command) > 0:
         cmd = args.command
