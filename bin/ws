@@ -109,6 +109,7 @@ def update_config(ws, config):
     tmpfile = '%s.tmp' % config_path
     with open(tmpfile, 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
+        f.flush()
         os.fdatasync(f)
     os.rename(tmpfile, config_path)
 
