@@ -992,7 +992,7 @@ def do_env(ws, args):
 
     d = parse_manifest(args.root)
     build_env = get_build_env(ws, args.project, d)
-    build_env['PATH'] = merge_var(build_env, 'PATH', [build_dir])
+    merge_var(build_env, 'PATH', [build_dir])
 
     if len(args.command) > 0:
         cmd = args.command
