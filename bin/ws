@@ -78,7 +78,7 @@ def find_root():
 def get_manifest_path(root):
     '''Returns the path to the ws manifest.'''
     parent = os.path.realpath(os.path.join(root, os.pardir))
-    return os.path.join(parent, '.repo', 'manifests', 'ws-manifest.yml')
+    return os.path.join(parent, '.repo', 'manifests', 'ws-manifest.yaml')
 
 
 def get_ws_dir(root, ws):
@@ -90,7 +90,7 @@ def get_ws_dir(root, ws):
 def get_ws_config_path(ws):
     '''Returns the ws internal config file, used for tracking the state of the
     workspace.'''
-    return os.path.join(ws, 'config.yml')
+    return os.path.join(ws, 'config.yaml')
 
 
 def get_ws_config(ws):
