@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# setuptools script for ws.
+# cmake plugin for ws.
 #
 # Copyright (c) 2018 Xevo Inc. All rights reserved.
 #
@@ -23,27 +23,32 @@
 # SOFTWARE.
 #
 
-import setuptools
 
+import multiprocessing
 
-setuptools.setup(
-    name='ws-tool',
-    version='0.1',
-    description='A lightweight tool for managing a workspace of repositories',
-    author='Martin Kelly',
-    author_email='mkelly@xevo.com',
-    license='BSD',
-    python_requires='>=3',
-    install_requires=['PyYAML>=3.12'],
-    packages=['wst'],
-    scripts=['bin/ws'],
-    classifiers=['Development Status :: 3 - Alpha',
-                 'Environment :: Console',
-                 'Intended Audience :: Developers',
-                 'License :: BSD',
-                 'Natural Language :: English',
-                 'Operating System :: POSIX :: Linux',
-                 'Programming Language :: Python :: 3 :: Only',
-                 'Topic :: Software Development :: Build Tools',
-                 ],
+from wst.shell import (
+    call_build,
+    call_clean,
+    call_configure
 )
+
+
+def conf_cmake(proj, prefix, build_dir, source_dir, env, build_type):
+    '''Calls configure using CMake.'''
+    cmd = (
+        'cmake',
+        '-DCMAKE_BUILD_TYPE', build_type,
+        '-DCMAKE_INSTALL_PREFIX', prefix,
+        build_dir,
+        source_dir)
+    return call_configure(cmd, env=env)
+
+
+def build_cmake(proj, source_dir, build_dir, env):
+    '''Calls build using CMake.'''
+    return call_build(('make', '-j', multiprocessing.cpu_count()+1), env=env)
+
+
+def clean_cmake(proj, build_dir, env):
+    '''Calls clean using CMake.'''
+    return call_clean(('make', '-C', build_dir, 'clean'), env=env)

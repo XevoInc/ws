@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# setuptools script for ws.
+# Default action implementation.
 #
 # Copyright (c) 2018 Xevo Inc. All rights reserved.
 #
@@ -23,27 +23,40 @@
 # SOFTWARE.
 #
 
-import setuptools
+import os
 
-
-setuptools.setup(
-    name='ws-tool',
-    version='0.1',
-    description='A lightweight tool for managing a workspace of repositories',
-    author='Martin Kelly',
-    author_email='mkelly@xevo.com',
-    license='BSD',
-    python_requires='>=3',
-    install_requires=['PyYAML>=3.12'],
-    packages=['wst'],
-    scripts=['bin/ws'],
-    classifiers=['Development Status :: 3 - Alpha',
-                 'Environment :: Console',
-                 'Intended Audience :: Developers',
-                 'License :: BSD',
-                 'Natural Language :: English',
-                 'Operating System :: POSIX :: Linux',
-                 'Programming Language :: Python :: 3 :: Only',
-                 'Topic :: Software Development :: Build Tools',
-                 ],
+from wst import WSError
+from wst.conf import (
+    get_default_ws_link,
+    get_ws_dir
 )
+
+
+def args(parser):
+    '''Populates the argument parser for the default subcmd.'''
+    parser.add_argument(
+        metavar='workspace',
+        dest='default_ws',
+        action='store',
+        default=None,
+        nargs='?',
+        help='Workspace to make the default')
+
+
+def handler(_, args):
+    '''Executes the default subcmd.'''
+    link = get_default_ws_link(args.root)
+    if args.default_ws is None:
+        # Just report what the default currently is.
+        dest = os.path.basename(os.path.realpath(link))
+        print(dest)
+        return
+
+    ws_dir = get_ws_dir(args.root, args.default_ws)
+
+    os.remove(link)
+    if not os.path.exists(ws_dir):
+        raise WSError('Cannot make non-existent workspace %s the default' %
+                      args.default_ws)
+
+    os.symlink(args.default_ws, link)

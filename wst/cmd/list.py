@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# setuptools script for ws.
+# List action implementation.
 #
 # Copyright (c) 2018 Xevo Inc. All rights reserved.
 #
@@ -23,27 +23,32 @@
 # SOFTWARE.
 #
 
-import setuptools
+import os
 
-
-setuptools.setup(
-    name='ws-tool',
-    version='0.1',
-    description='A lightweight tool for managing a workspace of repositories',
-    author='Martin Kelly',
-    author_email='mkelly@xevo.com',
-    license='BSD',
-    python_requires='>=3',
-    install_requires=['PyYAML>=3.12'],
-    packages=['wst'],
-    scripts=['bin/ws'],
-    classifiers=['Development Status :: 3 - Alpha',
-                 'Environment :: Console',
-                 'Intended Audience :: Developers',
-                 'License :: BSD',
-                 'Natural Language :: English',
-                 'Operating System :: POSIX :: Linux',
-                 'Programming Language :: Python :: 3 :: Only',
-                 'Topic :: Software Development :: Build Tools',
-                 ],
+from wst.conf import (
+    get_default_ws_name,
+    parse_manifest
 )
+
+
+def args(parser):
+    '''Populates the argument parser for the list subcmd.'''
+    parser.add_argument(
+        '-w', '--workspaces',
+        action='store_true',
+        dest='list_workspaces',
+        default=False,
+        help='List workspaces instead of projects')
+
+
+def handler(_, args):
+    '''Executes the list subcmd.'''
+    if args.list_workspaces:
+        dirs = os.listdir(args.root)
+        for ws in dirs:
+            if ws != get_default_ws_name():
+                print(ws)
+    else:
+        d = parse_manifest(args.root)
+        for proj in d:
+            print(proj)
