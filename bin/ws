@@ -666,7 +666,7 @@ def conf_meson(proj, prefix, build_dir, source_dir, env, build_type):
     return call_configure(cmd, env=env)
 
 
-def build_meson(proj, build_dir, env):
+def build_meson(proj, source_dir, build_dir, env):
     '''Calls build using the Meson build itself.'''
     return call_build(('ninja', '-C', build_dir, 'install'), env=env)
 
@@ -687,7 +687,7 @@ def conf_cmake(proj, prefix, build_dir, source_dir, env, build_type):
     return call_configure(cmd, env=env)
 
 
-def build_cmake(proj, build_dir, env):
+def build_cmake(proj, source_dir, build_dir, env):
     '''Calls build using CMake.'''
     return call_build(('make', '-j', _CPU_COUNT+1), env=env)
 
@@ -695,6 +695,46 @@ def build_cmake(proj, build_dir, env):
 def clean_cmake(proj, build_dir, env):
     '''Calls clean using CMake.'''
     return call_clean(('make', '-C', build_dir, 'clean'), env=env)
+
+
+def conf_setuptools(proj, prefix, build_dir, source_dir, env, build_type):
+    '''Calls configure using setuptools.'''
+    # setuptools doesn't have a configure step.
+    return True
+
+
+def build_setuptools(proj, source_dir, build_dir, env):
+    '''Calls build using setuptools.'''
+
+    # setuptools requires everything in PYTHONPATH to exist already, so create
+    # any directories needed.
+    paths = env['PYTHONPATH'].split(':')
+    for path in paths:
+        if not path.startswith(build_dir):
+            continue
+
+        # Found our path. We can assume the build directory already exists.
+        assert(path.startswith(build_dir))
+        path = path[len(build_dir)+1:]
+        components = path.split(os.sep)
+        for i in range(len(components)):
+            full_path = os.sep.join(components[:i+1])
+            full_path = os.path.join(build_dir, full_path)
+            os.mkdir(full_path)
+
+    return call_build(
+        ('python3',
+         'setup.py',
+         'install',
+         '--prefix=%s' % build_dir),
+        cwd=source_dir,
+        env=env)
+
+
+def clean_setuptools(proj, build_dir, env):
+    '''Calls clean using setuptools.'''
+    # setuptools doesn't have a clean function.
+    shutil.rmtree(build_dir)
 
 
 # These hooks contain functions to handle the build tasks for each build system
@@ -710,6 +750,11 @@ _BUILD_TOOLS = {
         'configure': conf_cmake,
         'build': build_cmake,
         'clean': clean_cmake
+    },
+    'setuptools': {
+        'configure': conf_setuptools,
+        'build': build_setuptools,
+        'clean': clean_setuptools
     }
 }
 
@@ -856,6 +901,15 @@ def get_build_env(ws, proj, d):
 
     merge_var(build_env, 'PKG_CONFIG_PATH', pkgconfig_path)
     merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
+    if d[proj]['build'] == 'setuptools':
+        build_dir = get_build_dir(ws, proj)
+        py_major, py_minor = sys.version_info[0], sys.version_info[1]
+        site_packages_dir = os.path.join(
+            build_dir,
+            'lib',
+            'python%d.%d' % (py_major, py_minor),
+            'site-packages')
+        merge_var(build_env, 'PYTHONPATH', [site_packages_dir])
 
     lib_path = get_lib_path(ws, proj)
     install_dir = get_install_dir(ws, proj)
@@ -930,7 +984,7 @@ def build(root, ws, proj, d, ws_config, force):
             return False
 
     # Build.
-    success = props['build'](proj, build_dir, build_env)
+    success = props['build'](proj, source_dir, build_dir, build_env)
     if success:
         set_stored_checksum(ws, proj, current)
 
