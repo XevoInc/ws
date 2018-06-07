@@ -23,6 +23,7 @@
 # SOFTWARE.
 #
 
+from wst.builder import Builder
 from wst.shell import (
     call_build,
     call_clean,
@@ -30,22 +31,27 @@ from wst.shell import (
 )
 
 
-def conf_meson(proj, prefix, build_dir, source_dir, env, build_type):
-    '''Calls configure using the Meson build itself.'''
-    cmd = (
-        'meson',
-        '--buildtype', build_type,
-        '--prefix', prefix,
-        build_dir,
-        source_dir)
-    return call_configure(cmd, env=env)
+class MesonBuilder(Builder):
+    '''A meson builder.'''
+    @classmethod
+    def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
+        '''Calls configure using the Meson build itself.'''
+        cmd = (
+            'meson',
+            '--buildtype', build_type,
+            '--prefix', prefix,
+            build_dir,
+            source_dir)
+        return call_configure(cmd, env=env)
 
 
-def build_meson(proj, source_dir, build_dir, env):
-    '''Calls build using the Meson build itself.'''
-    return call_build(('ninja', '-C', build_dir, 'install'), env=env)
+    @classmethod
+    def build(cls, proj, source_dir, build_dir, env):
+        '''Calls build using the Meson build itself.'''
+        return call_build(('ninja', '-C', build_dir, 'install'), env=env)
 
 
-def clean_meson(proj, build_dir, env):
-    '''Calls clean using the Meson build itself.'''
-    return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)
+    @classmethod
+    def clean(cls, proj, build_dir, env):
+        '''Calls clean using the Meson build itself.'''
+        return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)

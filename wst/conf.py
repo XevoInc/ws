@@ -39,9 +39,9 @@ from wst.shell import (
     call_output,
 )
 
-import wst.builder.cmake
-import wst.builder.meson
-import wst.builder.setuptools
+from wst.builder.cmake import CMakeBuilder
+from wst.builder.meson import MesonBuilder
+from wst.builder.setuptools import SetuptoolsBuilder
 
 
 BUILD_TYPES = ('debug', 'release')
@@ -255,9 +255,9 @@ def get_host_triplet():  # noqa: E302
 
 def get_lib_path(ws, proj):
     '''Gets the path to installed libraries for a project.'''
-    host_triplet = wst.conf.get_host_triplet()
+    host_triplet = get_host_triplet()
     return os.path.join(
-            wst.conf.get_install_dir(ws, proj),
+            get_install_dir(ws, proj),
             'lib',
             host_triplet)
 
@@ -375,35 +375,23 @@ def calculate_checksum(source_dir):
 # we support. To add a new build system, add a new entry and supply the correct
 # hooks.
 _BUILD_TOOLS = {
-    'meson': {
-        'configure': wst.builder.meson.conf_meson,
-        'build': wst.builder.meson.build_meson,
-        'clean': wst.builder.meson.clean_meson
-    },
-    'cmake': {
-        'configure': wst.builder.cmake.conf_cmake,
-        'build': wst.builder.cmake.build_cmake,
-        'clean': wst.builder.cmake.clean_cmake
-    },
-    'setuptools': {
-        'configure': wst.builder.setuptools.conf_setuptools,
-        'build': wst.builder.setuptools.build_setuptools,
-        'clean': wst.builder.setuptools.clean_setuptools
-    }
+    'meson': MesonBuilder,
+    'cmake': CMakeBuilder,
+    'setuptools': SetuptoolsBuilder
 }
 
 
-def get_build_props(project, d):
+def get_builder(project, d):
     '''Returns the build properties for a given project. This function should
     be used instead of directly referencing _BUILD_TOOLS.'''
     build = d[project]['build']
     try:
-        build_props = _BUILD_TOOLS[build]
+        builder = _BUILD_TOOLS[build]
     except KeyError:
         raise WSError('unknown build tool %s for project %s'
                       % (build, project))
 
-    return build_props
+    return builder
 
 
 def merge_var(env, var, val):

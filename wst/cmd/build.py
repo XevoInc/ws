@@ -34,7 +34,7 @@ from wst.conf import (
     dependency_closure,
     get_build_dir,
     get_build_env,
-    get_build_props,
+    get_builder,
     get_install_dir,
     get_proj_dir,
     get_source_dir,
@@ -108,10 +108,10 @@ def build(root, ws, proj, d, ws_config, force):
     build_env = get_build_env(ws, proj, d)
 
     # Configure.
-    props = get_build_props(proj, d)
+    builder = get_builder(proj, d)
     if needs_configure:
         prefix = os.path.realpath(get_install_dir(ws, proj))
-        success = props['configure'](
+        success = builder.conf(
             proj,
             prefix,
             build_dir,
@@ -125,7 +125,7 @@ def build(root, ws, proj, d, ws_config, force):
             return False
 
     # Build.
-    success = props['build'](proj, source_dir, build_dir, build_env)
+    success = builder.build(proj, source_dir, build_dir, build_env)
     if success:
         set_stored_checksum(ws, proj, current)
 

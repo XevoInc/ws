@@ -35,7 +35,7 @@ from wst import (
 from wst.conf import (
     get_build_dir,
     get_build_env,
-    get_build_props,
+    get_builder,
     get_ws_config,
     invalidate_checksum,
     parse_manifest,
@@ -80,13 +80,13 @@ def force_clean(ws, proj):
 def polite_clean(ws, proj, d):
     '''Performs a polite-clean of a project, calling the underlying build
     system of a project and asking it to clean itself.'''
-    build_props = get_build_props(proj, d)
+    builder = get_builder(proj, d)
     build_dir = get_build_dir(ws, proj)
     if not os.path.exists(build_dir):
         return
 
     build_env = get_build_env(ws, proj, d)
-    build_props['clean'](proj, build_dir, build_env)
+    builder.clean(proj, build_dir, build_env)
 
 
 def clean(ws, proj, force, d):

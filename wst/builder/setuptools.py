@@ -26,44 +26,50 @@
 import os
 import shutil
 
+from wst.builder import Builder
 from wst.shell import call_build
 
 
-def conf_setuptools(proj, prefix, build_dir, source_dir, env, build_type):
-    '''Calls configure using setuptools.'''
-    # setuptools doesn't have a configure step.
-    return True
+class SetuptoolsBuilder(Builder):
+    '''A setuptools builder.'''
+    @classmethod
+    def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
+        '''Calls configure using setuptools.'''
+        # setuptools doesn't have a configure step.
+        return True
 
 
-def build_setuptools(proj, source_dir, build_dir, env):
-    '''Calls build using setuptools.'''
+    @classmethod
+    def build(cls, proj, source_dir, build_dir, env):
+        '''Calls build using setuptools.'''
 
-    # setuptools requires everything in PYTHONPATH to exist already, so create
-    # any directories needed.
-    paths = env['PYTHONPATH'].split(':')
-    for path in paths:
-        if not path.startswith(build_dir):
-            continue
+        # setuptools requires everything in PYTHONPATH to exist already, so create
+        # any directories needed.
+        paths = env['PYTHONPATH'].split(':')
+        for path in paths:
+            if not path.startswith(build_dir):
+                continue
 
-        # Found our path. We can assume the build directory already exists.
-        assert(path.startswith(build_dir))
-        path = path[len(build_dir)+1:]
-        components = path.split(os.sep)
-        for i in range(len(components)):
-            full_path = os.sep.join(components[:i+1])
-            full_path = os.path.join(build_dir, full_path)
-            os.mkdir(full_path)
+            # Found our path. We can assume the build directory already exists.
+            assert(path.startswith(build_dir))
+            path = path[len(build_dir)+1:]
+            components = path.split(os.sep)
+            for i in range(len(components)):
+                full_path = os.sep.join(components[:i+1])
+                full_path = os.path.join(build_dir, full_path)
+                os.mkdir(full_path)
 
-    return call_build(
-        ('python3',
-         'setup.py',
-         'install',
-         '--prefix=%s' % build_dir),
-        cwd=source_dir,
-        env=env)
+        return call_build(
+            ('python3',
+             'setup.py',
+             'install',
+             '--prefix=%s' % build_dir),
+            cwd=source_dir,
+            env=env)
 
 
-def clean_setuptools(proj, build_dir, env):
-    '''Calls clean using setuptools.'''
-    # setuptools doesn't have a clean function.
-    shutil.rmtree(build_dir)
+    @classmethod
+    def clean(cls, proj, build_dir, env):
+        '''Calls clean using setuptools.'''
+        # setuptools doesn't have a clean function.
+        shutil.rmtree(build_dir)
