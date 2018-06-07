@@ -34,7 +34,7 @@ setuptools.setup(
     author_email='mkelly@xevo.com',
     license='BSD',
     python_requires='>=3',
-    install_requires=['PyYAML>=3.12'],
+    install_requires=['PyYAML'],
     packages=['wst'],
     scripts=['bin/ws'],
     classifiers=['Development Status :: 3 - Alpha',
