@@ -29,7 +29,6 @@ from wst import WSError
 from wst.conf import (
     get_build_dir,
     get_default_ws_link,
-    get_toplevel_build_dir,
     get_ws_dir,
     parse_manifest
 )

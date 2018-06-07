@@ -50,8 +50,10 @@ class CMakeBuilder(Builder):
     @classmethod
     def build(cls, proj, source_dir, build_dir, env):
         '''Calls build using CMake.'''
-        return call_build(('make', '-j', multiprocessing.cpu_count()+1), env=env)
-
+        return call_build(
+            ('make', '-j',
+             multiprocessing.cpu_count()+1),
+            env=env)
 
     @classmethod
     def clean(cls, proj, build_dir, env):

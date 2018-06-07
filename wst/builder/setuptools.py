@@ -38,13 +38,12 @@ class SetuptoolsBuilder(Builder):
         # setuptools doesn't have a configure step.
         return True
 
-
     @classmethod
     def build(cls, proj, source_dir, build_dir, env):
         '''Calls build using setuptools.'''
 
-        # setuptools requires everything in PYTHONPATH to exist already, so create
-        # any directories needed.
+        # setuptools requires everything in PYTHONPATH to exist already, so
+        # create any directories needed.
         paths = env['PYTHONPATH'].split(':')
         for path in paths:
             if not path.startswith(build_dir):
@@ -66,7 +65,6 @@ class SetuptoolsBuilder(Builder):
              '--prefix=%s' % build_dir),
             cwd=source_dir,
             env=env)
-
 
     @classmethod
     def clean(cls, proj, build_dir, env):

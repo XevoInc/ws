@@ -44,12 +44,10 @@ class MesonBuilder(Builder):
             source_dir)
         return call_configure(cmd, env=env)
 
-
     @classmethod
     def build(cls, proj, source_dir, build_dir, env):
         '''Calls build using the Meson build itself.'''
         return call_build(('ninja', '-C', build_dir, 'install'), env=env)
-
 
     @classmethod
     def clean(cls, proj, build_dir, env):
