@@ -152,14 +152,15 @@ def parse_args():
         if args.root is None:
             if args.subcmd != 'init':
                 raise WSError("can't find .ws directory; please run %s init"
-                     % sys.argv[0])
+                              % sys.argv[0])
 
     if args.subcmd not in ('init', 'default', 'list', 'rename', 'remove'):
         if args.ws is None:
             args.ws = get_default_ws_link(args.root)
         ws_dir = get_ws_dir(args.root, args.ws)
         if not os.path.exists(ws_dir):
-            raise WSError('workspace %s at %s does not exist.' % (args.ws, ws_dir))
+            raise WSError('workspace %s at %s does not exist.'
+                          % (args.ws, ws_dir))
         if not os.path.exists(ws_dir):
             raise WSError('workspace at %s is not a directory.' % ws_dir)
     else:
