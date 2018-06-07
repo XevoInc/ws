@@ -27,9 +27,11 @@ import os
 
 from wst import WSError
 from wst.conf import (
+    get_build_dir,
     get_default_ws_link,
     get_toplevel_build_dir,
-    get_ws_dir
+    get_ws_dir,
+    parse_manifest
 )
 
 
@@ -47,18 +49,20 @@ def args(parser):
         help='New workspace name')
 
 
-def handler(_, args):
+def handler(ws, args):
     '''Executes the rename subcmd.'''
     old_ws_dir = get_ws_dir(args.root, args.old_ws)
     if not os.path.exists(old_ws_dir):
         raise WSError('Workspace %s does not exist' % args.old_ws)
 
-    old_build_dir = get_toplevel_build_dir(old_ws_dir)
-    if len(os.listdir(old_build_dir)) > 0:
-        raise WSError('cannot rename a workspace that contains build '
-                      'artifacts, as some builds contain absolute paths and '
-                      'are thus not relocatable. Please force-clean this '
-                      'workspace first and then rename it.')
+    d = parse_manifest(args.root)
+    for proj in d:
+        build_dir = get_build_dir(old_ws_dir, proj)
+        if os.path.exists(build_dir):
+            raise WSError('cannot rename a workspace that contains build '
+                          'artifacts, as some builds contain absolute paths '
+                          'and are thus not relocatable. Please force-clean '
+                          'this workspace first and then rename it.')
 
     new_ws_dir = get_ws_dir(args.root, args.new_ws)
     if os.path.exists(new_ws_dir):
