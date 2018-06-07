@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# setuptools plugin for ws.
+# setuptools builder.
 #
 # Copyright (c) 2018 Xevo Inc. All rights reserved.
 #

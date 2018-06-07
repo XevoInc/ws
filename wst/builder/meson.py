@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# meson plugin for ws.
+# meson builder.
 #
 # Copyright (c) 2018 Xevo Inc. All rights reserved.
 #

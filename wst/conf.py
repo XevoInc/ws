@@ -39,9 +39,9 @@ from wst.shell import (
     call_output,
 )
 
-import wst.plugin.cmake
-import wst.plugin.meson
-import wst.plugin.setuptools
+import wst.builder.cmake
+import wst.builder.meson
+import wst.builder.setuptools
 
 
 BUILD_TYPES = ('debug', 'release')
@@ -376,19 +376,19 @@ def calculate_checksum(source_dir):
 # hooks.
 _BUILD_TOOLS = {
     'meson': {
-        'configure': wst.plugin.meson.conf_meson,
-        'build': wst.plugin.meson.build_meson,
-        'clean': wst.plugin.meson.clean_meson
+        'configure': wst.builder.meson.conf_meson,
+        'build': wst.builder.meson.build_meson,
+        'clean': wst.builder.meson.clean_meson
     },
     'cmake': {
-        'configure': wst.plugin.cmake.conf_cmake,
-        'build': wst.plugin.cmake.build_cmake,
-        'clean': wst.plugin.cmake.clean_cmake
+        'configure': wst.builder.cmake.conf_cmake,
+        'build': wst.builder.cmake.build_cmake,
+        'clean': wst.builder.cmake.clean_cmake
     },
     'setuptools': {
-        'configure': wst.plugin.setuptools.conf_setuptools,
-        'build': wst.plugin.setuptools.build_setuptools,
-        'clean': wst.plugin.setuptools.clean_setuptools
+        'configure': wst.builder.setuptools.conf_setuptools,
+        'build': wst.builder.setuptools.build_setuptools,
+        'clean': wst.builder.setuptools.clean_setuptools
     }
 }
 

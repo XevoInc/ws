@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# cmake plugin for ws.
+# cmake builder.
 #
 # Copyright (c) 2018 Xevo Inc. All rights reserved.
 #
