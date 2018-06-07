@@ -2,7 +2,9 @@
 
 script_dir="$(dirname "$(readlink -e "$0")")"
 
-set -x
-exec flake8 \
+dirs="\
     "$(readlink -e $script_dir/../bin/ws)" \
-    "$(readlink -e $script_dir/../wst)"
+    "$(readlink -e $script_dir/../wst)" \
+"
+
+exec flake8 $dirs
