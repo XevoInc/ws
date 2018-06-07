@@ -55,7 +55,7 @@ def handler(_, args):
 
     old_build_dir = get_toplevel_build_dir(old_ws_dir)
     if len(os.listdir(old_build_dir)) > 0:
-        raise WSError('cannot remove a workspace that contains build '
+        raise WSError('cannot rename a workspace that contains build '
                       'artifacts, as some builds contain absolute paths and '
                       'are thus not relocatable. Please force-clean this '
                       'workspace first and then rename it.')
