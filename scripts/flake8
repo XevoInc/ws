@@ -3,4 +3,6 @@
 script_dir="$(dirname "$(readlink -e "$0")")"
 
 set -x
-exec flake8 "$script_dir/../bin/ws"
+exec flake8 \
+    "$(readlink -e $script_dir/../bin/ws)" \
+    "$(readlink -e $script_dir/../wst)"
