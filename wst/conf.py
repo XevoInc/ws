@@ -410,26 +410,26 @@ def merge_var(env, var, val):
 def get_build_env(ws, proj, d):
     '''Gets the environment that should be set during builds (and for the env
     command) for a given project.'''
-    pkgconfig_path = []
-    ld_library_path = []
     build_env = os.environ.copy()
 
+    pkgconfig_path = []
+    ld_library_path = []
+    python_path = []
     deps = dependency_closure(d, [proj])
     for dep in deps:
         pkgconfig_path.append(get_pkgconfig_path(ws, dep))
         ld_library_path.append(get_lib_path(ws, dep))
-
+        if d[dep]['build'] == 'setuptools':
+            build_dir = get_build_dir(ws, dep)
+            py_major, py_minor = sys.version_info[0], sys.version_info[1]
+            python_path.append(os.path.join(
+                build_dir,
+                'lib',
+                'python%d.%d' % (py_major, py_minor),
+                'site-packages'))
     merge_var(build_env, 'PKG_CONFIG_PATH', pkgconfig_path)
     merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
-    if d[proj]['build'] == 'setuptools':
-        build_dir = get_build_dir(ws, proj)
-        py_major, py_minor = sys.version_info[0], sys.version_info[1]
-        site_packages_dir = os.path.join(
-            build_dir,
-            'lib',
-            'python%d.%d' % (py_major, py_minor),
-            'site-packages')
-        merge_var(build_env, 'PYTHONPATH', [site_packages_dir])
+    merge_var(build_env, 'PYTHONPATH', python_path)
 
     lib_path = get_lib_path(ws, proj)
     install_dir = get_install_dir(ws, proj)
