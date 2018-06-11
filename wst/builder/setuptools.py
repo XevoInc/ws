@@ -56,7 +56,10 @@ class SetuptoolsBuilder(Builder):
             for i in range(len(components)):
                 full_path = os.sep.join(components[:i+1])
                 full_path = os.path.join(build_dir, full_path)
-                os.mkdir(full_path)
+                try:
+                    os.mkdir(full_path)
+                except FileExistsError:
+                    pass
 
         return call_build(
             ('python3',
