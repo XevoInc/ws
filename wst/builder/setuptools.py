@@ -42,28 +42,13 @@ class SetuptoolsBuilder(Builder):
     def build(cls, proj, source_dir, build_dir, env):
         '''Calls build using setuptools.'''
 
-        # setuptools requires everything in PYTHONPATH to exist already, so
-        # create any directories needed.
-        paths = env['PYTHONPATH'].split(':')
-        for path in paths:
-            if not path.startswith(build_dir):
-                continue
-
-            # Found our path. We can assume the build directory already exists.
-            assert(path.startswith(build_dir))
-            path = path[len(build_dir)+1:]
-            components = path.split(os.sep)
-            for i in range(len(components)):
-                full_path = os.sep.join(components[:i+1])
-                full_path = os.path.join(build_dir, full_path)
-                try:
-                    os.mkdir(full_path)
-                except FileExistsError:
-                    pass
-
         return call_build(
             ('python3',
              'setup.py',
+             'egg_info',
+             '--egg-base=%s' % build_dir,
+             'build',
+             '--build-base=%s' % build_dir,
              'install',
              '--prefix=%s' % build_dir),
             cwd=source_dir,
