@@ -25,6 +25,7 @@
 
 import errno
 import logging
+import multiprocessing
 import os
 import shutil
 
@@ -62,10 +63,9 @@ def args(parser):
         help='Force a build')
 
 
-def build(root, ws, proj, d, ws_config, force):
+def build(root, ws, proj, d, current, ws_config, force):
     '''Builds a given project.'''
     source_dir = get_source_dir(root, d, proj)
-    current = calculate_checksum(source_dir)
     if not force:
         stored = get_stored_checksum(ws, proj)
         if current == stored:
@@ -154,8 +154,17 @@ def handler(ws, args):
 
     # Build in reverse-dependency order.
     order = dependency_closure(d, projects)
-    for proj in order:
+
+    # Get all checksums; since this is a nop build bottle-neck, do it in
+    # parallel. On my machine, this produces a ~20% speedup on a nop
+    # "build-all".
+    pool = multiprocessing.Pool(multiprocessing.cpu_count())
+    src_dirs = [get_source_dir(args.root, d, proj) for proj in order]
+    checksums = pool.map(calculate_checksum, src_dirs)
+
+    for i, proj in enumerate(order):
         logging.info('Building %s' % proj)
-        success = build(args.root, ws, proj, d, ws_config, args.force)
+        checksum = checksums[i]
+        success = build(args.root, ws, proj, d, checksum, ws_config, args.force)
         if not success:
             raise WSError('%s build failed' % proj)
