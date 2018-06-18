@@ -59,7 +59,7 @@ def handler(ws, args):
     '''Executes the env subcmd.'''
     build_dir = get_build_dir(ws, args.project)
     if not os.path.isdir(build_dir):
-        raise WSError('build directory for %s doesn\"t exist; have you built '
+        raise WSError('build directory for %s doesn\'t exist; have you built '
                       'it yet?' % args.project)
 
     d = parse_manifest(args.root)
