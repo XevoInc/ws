@@ -23,7 +23,6 @@
 # SOFTWARE.
 #
 
-import os
 import shutil
 
 from wst.builder import Builder

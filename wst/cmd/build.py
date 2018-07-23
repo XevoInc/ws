@@ -165,6 +165,13 @@ def handler(ws, args):
     for i, proj in enumerate(order):
         logging.info('Building %s' % proj)
         checksum = checksums[i]
-        success = build(args.root, ws, proj, d, checksum, ws_config, args.force)
+        success = build(
+            args.root,
+            ws,
+            proj,
+            d,
+            checksum,
+            ws_config,
+            args.force)
         if not success:
             raise WSError('%s build failed' % proj)
