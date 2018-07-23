@@ -28,12 +28,16 @@ ws init
 ws build
 ```
 
-`ws init` will look for a file called `ws-manifest.yml` at the root of the
-repository contianing the `git-repo` manifest (the one we passed `-u` into when
-we called `repo init`). This file contains dependency and build system
+By default, `ws init` will look for a file called `ws-manifest.yaml` at the root
+of the repository containing the `git-repo` manifest (the one we passed `-u`
+into when we called `repo init`). This file contains dependency and build system
 information for the projects that `ws` manages. Note that `ws` does not have to
 manage all the same projects that `repo` manages, but it can. The full format
-for `ws-manifest.yml` is at the bottom of the README.
+for `ws-manifest.yaml` is at the bottom of the README.
+
+If you don't use the `git-repo` tool, you can instead pass in your own ws
+manifest via `ws init -m`. This lets you manage the manifest however you like
+(e.g. submodules, or manually).
 
 ## bash-completion
 If you like bash-completions and typing things fast, you can do:
@@ -50,7 +54,7 @@ alternate workspace with the `-w` option. You may want to create multiple
 workspaces to manage multiple build configurations, such as separate debug and
 release builds. However, all workspaces in the same `.ws` directory will still
 operate on the same source code (the repositories configured in
-`ws-manifest.yml`).
+`ws-manifest.yaml`).
 
 ### ws default
 `ws default` is used to change the default workspace (the one used when you

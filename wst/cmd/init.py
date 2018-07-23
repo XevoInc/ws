@@ -31,8 +31,13 @@ from wst.conf import (
     BUILD_TYPES,
     get_checksum_dir,
     get_default_ws_link,
+    get_default_ws_name,
+    get_default_manifest_path,
+    get_manifest_link,
+    get_manifest_link_name,
     get_toplevel_build_dir,
     get_ws_dir,
+    parse_manifest_file,
     update_config
 )
 
@@ -53,6 +58,19 @@ def args(parser):
         choices=BUILD_TYPES,
         default='debug',
         help='Workspace type')
+    parser.add_argument(
+        '-m', '--manifest',
+        action='store',
+        default=None,
+        help='ws manifest path')
+
+
+def is_subdir(a, b):
+    '''Returns True if a is a sub-directory of b.'''
+    a = os.path.abspath(a)
+    b = os.path.abspath(b)
+
+    return os.path.commonpath((a, b)) == b
 
 
 def handler(_, args):
@@ -65,11 +83,37 @@ def handler(_, args):
     if args.init_ws is None:
         ws = 'ws'
     else:
+        reserved = (get_default_ws_name(), get_manifest_link_name())
+        for name in reserved:
+            if args.init_ws == name:
+                raise WSError('%s is a reserved name; please choose a '
+                              'different name' % name)
         ws = args.init_ws
     ws_dir = get_ws_dir(root, ws)
 
     if os.path.exists(ws_dir):
         raise WSError('Cannot initialize already existing workspace %s' % ws)
+
+    if args.manifest is None:
+        manifest = os.path.relpath(get_default_manifest_path(root), root)
+    else:
+        manifest = os.path.abspath(args.manifest)
+        # Use a relative path for anything inside the parent of .ws and an
+        # absolute path for anything outside. This is to maximize
+        # relocatability for groups of git repos (e.g. using submodules,
+        # repo-tool, etc.).
+        parent = os.path.realpath(os.path.join(root, os.pardir))
+        if is_subdir(manifest, parent):
+            manifest = os.path.relpath(manifest, root)
+        else:
+            manifest = os.path.abspath(manifest)
+
+    # Make sure the given manifest is sane.
+    if os.path.isabs(manifest):
+        abs_manifest = manifest
+    else:
+        abs_manifest = os.path.abspath(os.path.join(root, manifest))
+    parse_manifest_file(root, abs_manifest)
 
     try:
         os.mkdir(root)
@@ -84,8 +128,8 @@ def handler(_, args):
     if new:
         # This is a brand new .ws directory, so populate the initial
         # directories.
-        link = get_default_ws_link(root)
-        os.symlink(ws, link)
+        os.symlink(ws, get_default_ws_link(root))
+        os.symlink(manifest, get_manifest_link(root))
         os.mkdir(get_toplevel_build_dir(ws_dir))
         os.mkdir(get_checksum_dir(ws_dir))
         config = {

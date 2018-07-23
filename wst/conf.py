@@ -50,15 +50,15 @@ VALID_CONFIG = {
 }
 
 
-def parse_manifest(root):
-    '''Parses the ws manifest, returning a dictionary of the manifest data.'''
-    # Parse.
-    path = get_manifest_path(root)
+def parse_manifest_file(root, manifest):
+    '''Parses the given ws manifest file, returning a dictionary of the
+    manifest data.'''
     try:
-        with open(path, 'r') as f:
+        with open(manifest, 'r') as f:
             d = yaml.load(f)
     except IOError:
-        raise WSError('ws manifest %s not found; please run repo init.' % path)
+        raise WSError('ws manifest %s not found; please run repo init.'
+                      % manifest)
 
     # Validate.
     required = {'build'}
@@ -113,6 +113,12 @@ def parse_manifest(root):
     return d
 
 
+def parse_manifest(root):
+    '''Parses the ws manifest, returning a dictionary of the manifest data.'''
+    # Parse.
+    return parse_manifest_file(root, get_manifest_link(root))
+
+
 def dependency_closure(d, projects):
     '''Returns the dependency closure for a list of projects. This is the set
     of dependencies of each project, dependencies of that project, and so
@@ -149,7 +155,7 @@ def find_root():
     return None
 
 
-def get_manifest_path(root):
+def get_default_manifest_path(root):
     '''Returns the path to the ws manifest.'''
     parent = os.path.realpath(os.path.join(root, os.pardir))
     return os.path.join(parent, '.repo', 'manifests', 'ws-manifest.yaml')
@@ -197,6 +203,16 @@ def get_default_ws_name():
 def get_default_ws_link(root):
     '''Returns a path to the symlink that points to the current workspace.'''
     return os.path.join(root, get_default_ws_name())
+
+
+def get_manifest_link_name():
+    '''Returns the name of the symlink to the ws manifest.'''
+    return 'manifest'
+
+
+def get_manifest_link(root):
+    '''Returns a path to the symlink that points to the ws manifest.'''
+    return os.path.join(root, get_manifest_link_name())
 
 
 def get_checksum_dir(ws):
