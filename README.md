@@ -12,6 +12,15 @@ right order when they change.
 Note that these tools do not directly handle source code syncing. That job is
 left to [repo](https://code.google.com/archive/p/git-repo/).
 
+## Installing
+To install `ws`, you can use the `setup.py` script at the top level of the
+repository: `python3 setup.py install <add any custom options here>`. You can
+also use pip: `pip3 install .` from the top of the repository. Finally, if you
+want the installed `ws` to directly symlink into your source directory instead
+of being a one-time copy of the code, use `pip3 install -e .`, which activates
+pip "developer mode". This way, code changes immediately take effect without
+re-running the install step.
+
 ## ws
 The `ws` script is the main point of interaction with your workspace. It assumes
 you have already synced a bunch of code using the `repo` tool and, unless you
