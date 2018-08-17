@@ -12,6 +12,11 @@ right order when they change.
 Note that these tools do not directly handle source code syncing. That job is
 left to [repo](https://code.google.com/archive/p/git-repo/).
 
+## Dependencies
+`ws` depends on the Python 3 PyYAML, which you can get either with `sudo apt
+install python3-yaml` or via `pip3 install -r requirements.txt` from the top of
+the repository.
+
 ## Installing
 To install `ws`, you can use the `setup.py` script at the top level of the
 repository: `python3 setup.py install <add any custom options here>`. You can
