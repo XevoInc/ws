@@ -41,8 +41,8 @@ class CMakeBuilder(Builder):
         '''Calls configure using CMake.'''
         cmd = (
             'cmake',
-            '-DCMAKE_BUILD_TYPE', build_type,
-            '-DCMAKE_INSTALL_PREFIX', prefix,
+            '-DCMAKE_BUILD_TYPE=%s' % build_type,
+            '-DCMAKE_INSTALL_PREFIX=%s' % prefix,
             build_dir,
             source_dir)
         return call_configure(cmd, env=env)
