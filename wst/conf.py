@@ -269,19 +269,19 @@ def get_host_triplet():  # noqa: E302
     return _HOST_TRIPLET
 
 
-def get_lib_path(ws, proj):
+def get_lib_paths(ws, proj):
     '''Gets the path to installed libraries for a project.'''
-    host_triplet = get_host_triplet()
-    return os.path.join(
-            get_install_dir(ws, proj),
-            'lib',
-            host_triplet)
+    noarch_lib_dir = os.path.join(get_install_dir(ws, proj), 'lib')
+    arch_lib_arch_dir = os.path.join(noarch_lib_dir, get_host_triplet())
+    return [noarch_lib_dir, arch_lib_arch_dir]
 
 
-def get_pkgconfig_path(ws, proj):
+def get_pkgconfig_paths(ws, proj):
     '''Gets the path to the .pc files for a project.'''
-    lib_path = get_lib_path(ws, proj)
-    return os.path.join(lib_path, 'pkgconfig')
+    pkgconfig_paths = []
+    for lib_path in get_lib_paths(ws, proj):
+        pkgconfig_paths.append(os.path.join(lib_path, 'pkgconfig'))
+    return pkgconfig_paths
 
 
 def set_stored_checksum(ws, proj, checksum):
@@ -423,6 +423,21 @@ def merge_var(env, var, val):
     env[var] = ':'.join(entries)
 
 
+def expand_var(s, var, expansions):
+    '''Expands a template string of the form ${VAR} with each entry of the
+    expansions array, then join them in using the same scheme as the PATH
+    variable. For example, given:
+    s = ${ABC}/stuff
+    var = ABC
+    expansions = ['a', 'b', 'c'],
+    then expand_sub would return 'a/stuff:b/stuff:c/stuff'.'''
+    results = []
+    for expansion in expansions:
+        result = s.replace('${%s}' % var, expansion)
+        results.append(result)
+    return ':'.join(results)
+
+
 def get_build_env(ws, proj, d):
     '''Gets the environment that should be set during builds (and for the env
     command) for a given project.'''
@@ -433,8 +448,8 @@ def get_build_env(ws, proj, d):
     python_path = []
     deps = dependency_closure(d, [proj])
     for dep in deps:
-        pkgconfig_path.append(get_pkgconfig_path(ws, dep))
-        ld_library_path.append(get_lib_path(ws, dep))
+        pkgconfig_path.extend(get_pkgconfig_paths(ws, dep))
+        ld_library_path.extend(get_lib_paths(ws, dep))
         if d[dep]['build'] == 'setuptools':
             build_dir = get_build_dir(ws, dep)
             py_major, py_minor = sys.version_info[0], sys.version_info[1]
@@ -447,11 +462,11 @@ def get_build_env(ws, proj, d):
     merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
     merge_var(build_env, 'PYTHONPATH', python_path)
 
-    lib_path = get_lib_path(ws, proj)
+    lib_paths = get_lib_paths(ws, proj)
     install_dir = get_install_dir(ws, proj)
     for var, val in d[proj]['env'].items():
-        val = val.replace('${LIBDIR}', lib_path)
-        val = val.replace('${PREFIX}', install_dir)
+        val = expand_var(val, 'LIBDIR', lib_paths)
+        val = expand_var(val, 'PREFIX', [install_dir])
         merge_var(build_env, var, [val])
 
     return build_env
