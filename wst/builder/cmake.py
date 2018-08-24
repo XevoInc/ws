@@ -43,16 +43,17 @@ class CMakeBuilder(Builder):
             'cmake',
             '-DCMAKE_BUILD_TYPE=%s' % build_type,
             '-DCMAKE_INSTALL_PREFIX=%s' % prefix,
-            build_dir,
             source_dir)
-        return call_configure(cmd, env=env)
+        return call_configure(cmd, env=env, cwd=build_dir)
 
     @classmethod
     def build(cls, proj, source_dir, build_dir, env):
         '''Calls build using CMake.'''
         return call_build(
-            ('make', '-j',
-             multiprocessing.cpu_count()+1),
+            ('make',
+             '-C', build_dir,
+             '-j', str(multiprocessing.cpu_count()+1),
+             'install'),
             env=env)
 
     @classmethod
