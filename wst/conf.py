@@ -461,6 +461,9 @@ def get_build_env(ws, proj, d):
     for var, val in d[proj]['env'].items():
         val = expand_var(val, 'LIBDIR', lib_paths)
         val = expand_var(val, 'PREFIX', [install_dir])
+        # Expand every environment variable.
+        for k, v in build_env.items():
+            val = expand_var(val, k, [v])
         merge_var(build_env, var, [val])
 
     return build_env
