@@ -31,6 +31,7 @@ from wst import WSError
 from wst.conf import (
     get_build_dir,
     get_build_env,
+    get_install_dir,
     merge_var,
     parse_manifest
 )
@@ -64,7 +65,8 @@ def handler(ws, args):
 
     d = parse_manifest(args.root)
     build_env = get_build_env(ws, args.project, d)
-    merge_var(build_env, 'PATH', [build_dir])
+    bin_dir = os.path.join(get_install_dir(ws, args.project), 'bin')
+    merge_var(build_env, 'PATH', [build_dir, bin_dir])
 
     if len(args.command) > 0:
         cmd = args.command
