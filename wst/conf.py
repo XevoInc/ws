@@ -27,7 +27,6 @@ import errno
 import hashlib
 import logging
 import os
-import sys
 import yaml
 
 from wst import (
@@ -445,22 +444,17 @@ def get_build_env(ws, proj, d):
 
     pkgconfig_path = []
     ld_library_path = []
-    python_path = []
     deps = dependency_closure(d, [proj])
+
     for dep in deps:
         pkgconfig_path.extend(get_pkgconfig_paths(ws, dep))
         ld_library_path.extend(get_lib_paths(ws, dep))
-        if d[dep]['build'] == 'setuptools':
-            build_dir = get_build_dir(ws, dep)
-            py_major, py_minor = sys.version_info[0], sys.version_info[1]
-            python_path.append(os.path.join(
-                build_dir,
-                'lib',
-                'python%d.%d' % (py_major, py_minor),
-                'site-packages'))
+
     merge_var(build_env, 'PKG_CONFIG_PATH', pkgconfig_path)
     merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
-    merge_var(build_env, 'PYTHONPATH', python_path)
+    # Add in any builder-specific environment tweaks.
+    for dep in deps:
+        get_builder(dep, d).env(proj, get_build_dir(ws, dep), build_env)
 
     lib_paths = get_lib_paths(ws, proj)
     install_dir = get_install_dir(ws, proj)

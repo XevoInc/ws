@@ -37,6 +37,11 @@ from wst.shell import (
 class CMakeBuilder(Builder):
     '''A CMake builder.'''
     @classmethod
+    def env(cls, proj, build_dir, env):
+        '''Sets up environment tweaks for cmake.'''
+        pass
+
+    @classmethod
     def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
         '''Calls configure using CMake.'''
         cmd = (

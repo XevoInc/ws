@@ -23,7 +23,9 @@
 # SOFTWARE.
 #
 
+import os
 import shutil
+import sys
 
 from wst.builder import Builder
 from wst.shell import call_build
@@ -31,6 +33,23 @@ from wst.shell import call_build
 
 class SetuptoolsBuilder(Builder):
     '''A setuptools builder.'''
+
+    _PYTHON_PATH_SUFFIX = os.path.join(
+        'python%d.%d' % (sys.version_info[0], sys.version_info[1]),
+        'site-packages')
+
+    @classmethod
+    def env(cls, proj, build_dir, env):
+        '''Sets up environment tweaks for setuptools.'''
+        # Import here to prevent a circular import.
+        from wst.conf import merge_var
+
+        # setuptools won't install into a --prefix unless
+        # PREFIX/lib/pythonX.Y/site-packages is in PYTHONPATH, so we'll add it
+        # in manually.
+        python_path = os.path.join(build_dir, 'lib', cls._PYTHON_PATH_SUFFIX)
+        merge_var(env, 'PYTHONPATH', [python_path])
+
     @classmethod
     def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
         '''Calls configure using setuptools.'''

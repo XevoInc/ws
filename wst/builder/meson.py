@@ -34,6 +34,11 @@ from wst.shell import (
 class MesonBuilder(Builder):
     '''A meson builder.'''
     @classmethod
+    def env(cls, proj, build_dir, env):
+        '''Sets up environment tweaks for meson.'''
+        pass
+
+    @classmethod
     def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
         '''Calls configure using the Meson build itself.'''
         cmd = (
