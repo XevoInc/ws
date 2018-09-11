@@ -86,7 +86,8 @@ class SetuptoolsBuilder(Builder):
              'build',
              '--build-base=%s' % build_dir,
              'install',
-             '--prefix=%s' % prefix),
+             '--root=%s' % prefix,
+             '--prefix=.'),
             cwd=source_dir,
             env=env)
 
