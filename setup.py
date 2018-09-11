@@ -35,7 +35,7 @@ setuptools.setup(
     license='BSD',
     python_requires='>=3',
     install_requires=['PyYAML'],
-    packages=['wst'],
+    packages=setuptools.find_packages(),
     scripts=['bin/ws'],
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Console',
