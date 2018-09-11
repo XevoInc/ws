@@ -32,7 +32,7 @@ from wst.conf import (
     get_checksum_dir,
     get_default_ws_link,
     get_default_ws_name,
-    get_default_manifest_path,
+    get_default_manifest_name,
     get_manifest_link,
     get_manifest_link_name,
     get_toplevel_build_dir,
@@ -40,6 +40,9 @@ from wst.conf import (
     parse_manifest_file,
     update_config
 )
+
+
+MANIFEST_SOURCES = ('fs', 'repo')
 
 
 def args(parser):
@@ -61,8 +64,15 @@ def args(parser):
     parser.add_argument(
         '-m', '--manifest',
         action='store',
-        default=None,
+        default=get_default_manifest_name(),
         help='ws manifest path')
+    parser.add_argument(
+        '-s', '--manifest-source',
+        action='store',
+        choices=MANIFEST_SOURCES,
+        default='repo',
+        help=('If -m is specified, what the path is relative to (see README '
+              'for details)'))
 
 
 def is_subdir(a, b):
@@ -94,19 +104,23 @@ def handler(_, args):
     if os.path.exists(ws_dir):
         raise WSError('Cannot initialize already existing workspace %s' % ws)
 
-    if args.manifest is None:
-        manifest = os.path.relpath(get_default_manifest_path(root), root)
-    else:
-        manifest = os.path.abspath(args.manifest)
-        # Use a relative path for anything inside the parent of .ws and an
-        # absolute path for anything outside. This is to maximize
-        # relocatability for groups of git repos (e.g. using submodules,
-        # repo-tool, etc.).
+    if args.manifest_source == 'repo':
         parent = os.path.realpath(os.path.join(root, os.pardir))
-        if is_subdir(manifest, parent):
-            manifest = os.path.relpath(manifest, root)
-        else:
-            manifest = os.path.abspath(manifest)
+        base = os.path.join(parent, '.repo', 'manifests')
+    elif args.manifest_source == 'abs':
+        base = '.'
+    manifest = os.path.join(base, args.manifest)
+
+    # Use a relative path for anything inside the parent of .ws and an
+    # absolute path for anything outside. This is to maximize
+    # relocatability for groups of git repos (e.g. using submodules,
+    # repo-tool, etc.).
+    manifest = os.path.abspath(manifest)
+    parent = os.path.realpath(os.path.join(root, os.pardir))
+    if is_subdir(manifest, parent):
+        manifest = os.path.relpath(manifest, root)
+    else:
+        manifest = os.path.abspath(manifest)
 
     # Make sure the given manifest is sane.
     if os.path.isabs(manifest):

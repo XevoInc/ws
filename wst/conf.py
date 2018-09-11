@@ -154,10 +154,9 @@ def find_root():
     return None
 
 
-def get_default_manifest_path(root):
-    '''Returns the path to the ws manifest.'''
-    parent = os.path.realpath(os.path.join(root, os.pardir))
-    return os.path.join(parent, '.repo', 'manifests', 'ws-manifest.yaml')
+def get_default_manifest_name():
+    '''Returns the name of the default ws manifest.'''
+    return 'ws-manifest.yaml'
 
 
 def get_ws_dir(root, ws):

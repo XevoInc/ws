@@ -70,6 +70,12 @@ release builds. However, all workspaces in the same `.ws` directory will still
 operate on the same source code (the repositories configured in
 `ws-manifest.yaml`).
 
+If you specify `-m`, you can manually point to a `ws-manifest.yaml` to use. By
+default, this is relative to a repository containing a git-repo manifest (e.g.
+if you have a `.repo` directory after running `repo init`, then it is relative
+to `.repo/manifests`). If you specify `-s fs`, then it can point
+anywhere on the filesystem instead.
+
 ### ws default
 `ws default` is used to change the default workspace (the one used when you
 don't specify a `-w` option).
