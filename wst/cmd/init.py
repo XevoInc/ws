@@ -117,19 +117,23 @@ def handler(_, args):
 
     try:
         os.mkdir(root)
-        new = True
+        new_root = True
     except OSError as e:
-        new = False
         if e.errno != errno.EEXIST:
             raise
+        new_root = False
 
-    os.mkdir(ws_dir)
+    try:
+        os.mkdir(ws_dir)
+        new_ws = True
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+        new_ws = False
 
-    if new:
-        # This is a brand new .ws directory, so populate the initial
+    if new_ws:
+        # This is a brand-new workspace, so populate the initial workspace
         # directories.
-        os.symlink(ws, get_default_ws_link(root))
-        os.symlink(manifest, get_manifest_link(root))
         os.mkdir(get_toplevel_build_dir(ws_dir))
         os.mkdir(get_checksum_dir(ws_dir))
         config = {
@@ -137,3 +141,9 @@ def handler(_, args):
             'taint': False
         }
         update_config(ws_dir, config)
+
+    if new_root:
+        # This is a brand new root .ws directory, so populate the initial
+        # symlink defaults.
+        os.symlink(ws, get_default_ws_link(root))
+        os.symlink(manifest, get_manifest_link(root))
