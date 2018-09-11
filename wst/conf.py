@@ -454,7 +454,11 @@ def get_build_env(ws, proj, d):
     merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
     # Add in any builder-specific environment tweaks.
     for dep in deps:
-        get_builder(dep, d).env(proj, get_build_dir(ws, dep), build_env)
+        get_builder(dep, d).env(
+            proj,
+            get_install_dir(ws, dep),
+            get_build_dir(ws, dep),
+            build_env)
 
     lib_paths = get_lib_paths(ws, proj)
     install_dir = get_install_dir(ws, proj)

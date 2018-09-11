@@ -110,7 +110,7 @@ def build(root, ws, proj, d, current, ws_config, force):
     # Configure.
     builder = get_builder(proj, d)
     if needs_configure:
-        prefix = os.path.realpath(get_install_dir(ws, proj))
+        prefix = get_install_dir(ws, proj)
         success = builder.conf(
             proj,
             prefix,
@@ -125,7 +125,7 @@ def build(root, ws, proj, d, current, ws_config, force):
             return False
 
     # Build.
-    success = builder.build(proj, source_dir, build_dir, build_env)
+    success = builder.build(proj, prefix, source_dir, build_dir, build_env)
     if success:
         set_stored_checksum(ws, proj, current)
 

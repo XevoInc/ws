@@ -34,7 +34,7 @@ from wst.shell import (
 class MesonBuilder(Builder):
     '''A meson builder.'''
     @classmethod
-    def env(cls, proj, build_dir, env):
+    def env(cls, proj, prefix, build_dir, env):
         '''Sets up environment tweaks for meson.'''
         pass
 
@@ -50,7 +50,7 @@ class MesonBuilder(Builder):
         return call_configure(cmd, env=env)
 
     @classmethod
-    def build(cls, proj, source_dir, build_dir, env):
+    def build(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls build using the Meson build itself.'''
         return call_build(('ninja', '-C', build_dir, 'install'), env=env)
 

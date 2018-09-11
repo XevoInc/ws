@@ -40,7 +40,7 @@ class SetuptoolsBuilder(Builder):
         'site-packages')
 
     @classmethod
-    def env(cls, proj, build_dir, env):
+    def env(cls, proj, prefix, build_dir, env):
         '''Sets up environment tweaks for setuptools.'''
         # Import here to prevent a circular import.
         from wst.conf import merge_var
@@ -48,7 +48,7 @@ class SetuptoolsBuilder(Builder):
         # setuptools won't install into a --prefix unless
         # PREFIX/lib/pythonX.Y/site-packages is in PYTHONPATH, so we'll add it
         # in manually.
-        python_path = os.path.join(build_dir, cls._PYTHON_LIB_DIR)
+        python_path = os.path.join(prefix, cls._PYTHON_LIB_DIR)
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
@@ -58,12 +58,19 @@ class SetuptoolsBuilder(Builder):
         return True
 
     @classmethod
-    def build(cls, proj, source_dir, build_dir, env):
+    def build(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls build using setuptools.'''
+
+        # setuptools doesn't automatically create the installation directory,
+        # so we'll do it ourselves.
+        try:
+            os.mkdir(prefix)
+        except FileExistsError:
+            pass
 
         # Some packages require PREFIX/lib/pythonX.Y/site-packages to exist
         # before we can install into it.
-        path = build_dir
+        path = prefix
         for component in cls._PYTHON_LIB_DIR.split(os.sep):
             path = os.path.join(path, component)
             try:
@@ -79,7 +86,7 @@ class SetuptoolsBuilder(Builder):
              'build',
              '--build-base=%s' % build_dir,
              'install',
-             '--prefix=%s' % build_dir),
+             '--prefix=%s' % prefix),
             cwd=source_dir,
             env=env)
 

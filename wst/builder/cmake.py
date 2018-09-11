@@ -37,7 +37,7 @@ from wst.shell import (
 class CMakeBuilder(Builder):
     '''A CMake builder.'''
     @classmethod
-    def env(cls, proj, build_dir, env):
+    def env(cls, proj, prefix, build_dir, env):
         '''Sets up environment tweaks for cmake.'''
         pass
 
@@ -52,7 +52,7 @@ class CMakeBuilder(Builder):
         return call_configure(cmd, env=env, cwd=build_dir)
 
     @classmethod
-    def build(cls, proj, source_dir, build_dir, env):
+    def build(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls build using CMake.'''
         return call_build(
             ('make',
