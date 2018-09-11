@@ -109,8 +109,8 @@ def build(root, ws, proj, d, current, ws_config, force):
 
     # Configure.
     builder = get_builder(proj, d)
+    prefix = get_install_dir(ws, proj)
     if needs_configure:
-        prefix = get_install_dir(ws, proj)
         success = builder.conf(
             proj,
             prefix,
