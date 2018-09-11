@@ -27,6 +27,7 @@ import os
 
 from wst.conf import (
     get_default_ws_name,
+    get_manifest_link_name,
     parse_manifest
 )
 
@@ -46,8 +47,11 @@ def handler(_, args):
     if args.list_workspaces:
         dirs = os.listdir(args.root)
         for ws in dirs:
-            if ws != get_default_ws_name():
-                print(ws)
+            if ws == get_default_ws_name():
+                continue
+            if ws == get_manifest_link_name():
+                continue
+            print(ws)
     else:
         d = parse_manifest(args.root)
         for proj in d:
