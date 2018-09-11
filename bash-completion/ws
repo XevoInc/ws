@@ -71,6 +71,9 @@ _complete_ws() {
         rename)
             # Fall through.
             ;&
+        remove)
+            # Fall through.
+            ;&
         default)
             # Workspaces.
             local workspaces="$(ws list -w 2>/dev/null)"
