@@ -418,7 +418,9 @@ def merge_var(env, var, val):
     except KeyError:
         entries = val
     else:
-        entries = current.split(':') + val
+        entries = current.split(':')
+        if val not in entries:
+            entries = current.split(':') + val
     env[var] = ':'.join(entries)
 
 
@@ -433,7 +435,9 @@ def expand_var(s, var, expansions):
     results = []
     for expansion in expansions:
         result = s.replace('${%s}' % var, expansion)
-        results.append(result)
+        # Don't add duplicate entries.
+        if result not in results:
+            results.append(result)
     return ':'.join(results)
 
 
