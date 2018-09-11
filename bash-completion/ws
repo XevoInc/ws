@@ -26,6 +26,11 @@ _ws_list_projects() {
     COMPREPLY=($(compgen -W "$projects" -- $current))
 }
 
+_ws_list_workspaces() {
+    local workspaces="$(ws list -w 2>/dev/null)"
+    COMPREPLY=($(compgen -W "$workspaces" -- $current))
+}
+
 _complete_ws() {
     local i=1
     local posargs=1
@@ -49,6 +54,13 @@ _complete_ws() {
     done
     local cmd=${COMP_WORDS[cmd_index]}
     local current=${COMP_WORDS[COMP_CWORD]}
+    local last=${COMP_WORDS[$COMP_CWORD-1]}
+
+    if [[ $last == -w ]]; then
+        # "ws -w <TAB>"
+        _ws_list_workspaces
+        return
+    fi
 
     case "$cmd" in
         ws)
