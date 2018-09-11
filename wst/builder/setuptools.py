@@ -34,7 +34,8 @@ from wst.shell import call_build
 class SetuptoolsBuilder(Builder):
     '''A setuptools builder.'''
 
-    _PYTHON_PATH_SUFFIX = os.path.join(
+    _PYTHON_LIB_DIR = os.path.join(
+        'lib',
         'python%d.%d' % (sys.version_info[0], sys.version_info[1]),
         'site-packages')
 
@@ -47,7 +48,7 @@ class SetuptoolsBuilder(Builder):
         # setuptools won't install into a --prefix unless
         # PREFIX/lib/pythonX.Y/site-packages is in PYTHONPATH, so we'll add it
         # in manually.
-        python_path = os.path.join(build_dir, 'lib', cls._PYTHON_PATH_SUFFIX)
+        python_path = os.path.join(build_dir, cls._PYTHON_LIB_DIR)
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
@@ -59,6 +60,16 @@ class SetuptoolsBuilder(Builder):
     @classmethod
     def build(cls, proj, source_dir, build_dir, env):
         '''Calls build using setuptools.'''
+
+        # Some packages require PREFIX/lib/pythonX.Y/site-packages to exist
+        # before we can install into it.
+        path = build_dir
+        for component in cls._PYTHON_LIB_DIR.split(os.sep):
+            path = os.path.join(path, component)
+            try:
+                os.mkdir(path)
+            except FileExistsError:
+                break
 
         return call_build(
             ('python3',
