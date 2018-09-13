@@ -110,6 +110,10 @@ def handler(_, args):
     elif args.manifest_source == 'abs':
         base = '.'
     manifest = os.path.join(base, args.manifest)
+    if os.path.isdir(manifest):
+        # If -m points to a directory instead of a file, assume there is a file
+        # with the default manifest name inside.
+        manifest = os.path.join(manifest, get_default_manifest_name())
 
     # Use a relative path for anything inside the parent of .ws and an
     # absolute path for anything outside. This is to maximize
