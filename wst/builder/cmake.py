@@ -62,6 +62,6 @@ class CMakeBuilder(Builder):
             env=env)
 
     @classmethod
-    def clean(cls, proj, build_dir, env):
+    def clean(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls clean using CMake.'''
         return call_clean(('make', '-C', build_dir, 'clean'), env=env)

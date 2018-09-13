@@ -36,6 +36,8 @@ from wst.conf import (
     get_build_dir,
     get_build_env,
     get_builder,
+    get_install_dir,
+    get_source_dir,
     get_ws_config,
     invalidate_checksum,
     parse_manifest,
@@ -77,7 +79,7 @@ def force_clean(ws, proj):
     update_config(ws, config)
 
 
-def polite_clean(ws, proj, d):
+def polite_clean(root, ws, proj, d):
     '''Performs a polite-clean of a project, calling the underlying build
     system of a project and asking it to clean itself.'''
     builder = get_builder(proj, d)
@@ -86,17 +88,19 @@ def polite_clean(ws, proj, d):
         return
 
     build_env = get_build_env(ws, proj, d)
-    builder.clean(proj, build_dir, build_env)
+    prefix = get_install_dir(ws, proj)
+    source_dir = get_source_dir(root, d, proj)
+    builder.clean(proj, prefix, source_dir, build_dir, build_env)
 
 
-def clean(ws, proj, force, d):
+def clean(root, ws, proj, force, d):
     '''Cleans a project, forcefully or not.'''
     invalidate_checksum(ws, proj)
 
     if force:
         force_clean(ws, proj)
     else:
-        polite_clean(ws, proj, d)
+        polite_clean(root, ws, proj, d)
 
 
 def handler(ws, args):
@@ -113,4 +117,4 @@ def handler(ws, args):
         projects = args.projects
 
     for project in projects:
-        clean(ws, project, args.force, d)
+        clean(args.root, ws, project, args.force, d)

@@ -24,9 +24,7 @@
 #
 
 import os
-import shutil
 import sys
-
 from wst.builder import Builder
 from wst.shell import call_build
 
@@ -60,39 +58,23 @@ class SetuptoolsBuilder(Builder):
     @classmethod
     def build(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls build using setuptools.'''
-
-        # setuptools doesn't automatically create the installation directory,
-        # so we'll do it ourselves.
-        try:
-            os.mkdir(prefix)
-        except FileExistsError:
-            pass
-
-        # Some packages require PREFIX/lib/pythonX.Y/site-packages to exist
-        # before we can install into it.
-        path = prefix
-        for component in cls._PYTHON_LIB_DIR.split(os.sep):
-            path = os.path.join(path, component)
-            try:
-                os.mkdir(path)
-            except FileExistsError:
-                break
-
+        env['PYTHONUSERBASE'] = prefix
         return call_build(
-            ('python3',
-             'setup.py',
-             'egg_info',
-             '--egg-base=%s' % build_dir,
-             'build',
-             '--build-base=%s' % build_dir,
+            ('pip3',
              'install',
-             '--root=%s' % prefix,
-             '--prefix=.'),
+             '--build=%s' % build_dir,
+             '.'),
             cwd=source_dir,
             env=env)
 
     @classmethod
-    def clean(cls, proj, build_dir, env):
+    def clean(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls clean using setuptools.'''
-        # setuptools doesn't have a clean function.
-        shutil.rmtree(build_dir)
+        env['PYTHONUSERBASE'] = prefix
+        call_build(
+            ('pip3',
+             'uninstall',
+             '--yes',
+             '.'),
+            cwd=source_dir,
+            env=env)
