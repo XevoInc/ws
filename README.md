@@ -10,7 +10,7 @@ manually specifying `--prefix`, setting env vars, and rebuilding projects in the
 right order when they change.
 
 Note that these tools do not directly handle source code syncing. That job is
-left to [repo](https://code.google.com/archive/p/git-repo/).
+left to [repo](https://code.google.com/archive/p/git-repo/) and similar tools.
 
 ## Dependencies
 `ws` depends on the Python 3 PyYAML, which you can get either with `sudo apt
