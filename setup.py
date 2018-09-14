@@ -23,13 +23,22 @@
 # SOFTWARE.
 #
 
+import os
 import setuptools
 
+
+# Keep the long description in sync with the README.
+script_dir = os.path.dirname(os.path.realpath(__file__))
+readme_path = os.path.join(script_dir, 'README.md')
+with open(readme_path, 'r') as f:
+    long_desc = f.read()
 
 setuptools.setup(
     name='ws-tool',
     version='0.1',
     description='A lightweight tool for managing a workspace of repositories',
+    long_description=long_desc,
+    long_description_content_type='text/markdown',
     author='Martin Kelly',
     author_email='mkelly@xevo.com',
     license='BSD',
