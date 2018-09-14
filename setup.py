@@ -34,7 +34,7 @@ with open(readme_path, 'r') as f:
     long_desc = f.read()
 
 setuptools.setup(
-    name='ws-tool',
+    name='wst',
     version='0.1',
     description='A lightweight tool for managing a workspace of repositories',
     long_description=long_desc,
