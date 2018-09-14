@@ -50,7 +50,7 @@ class SetuptoolsBuilder(Builder):
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
-    def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
+    def conf(cls, proj, prefix, source_dir, build_dir, env, build_type):
         '''Calls configure using setuptools.'''
         # setuptools doesn't have a configure step.
         return True

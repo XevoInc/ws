@@ -114,8 +114,8 @@ def build(root, ws, proj, d, current, ws_config, force):
         success = builder.conf(
             proj,
             prefix,
-            build_dir,
             source_dir,
+            build_dir,
             build_env,
             ws_config['type'])
         if not success:

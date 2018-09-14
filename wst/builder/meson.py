@@ -39,7 +39,7 @@ class MesonBuilder(Builder):
         pass
 
     @classmethod
-    def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
+    def conf(cls, proj, prefix, source_dir, build_dir, env, build_type):
         '''Calls configure using the Meson build itself.'''
         cmd = (
             'meson',
