@@ -49,7 +49,7 @@ setuptools.setup(
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Console',
                  'Intended Audience :: Developers',
-                 'License :: BSD',
+                 'License :: OSI Approved :: BSD License',
                  'Natural Language :: English',
                  'Operating System :: POSIX :: Linux',
                  'Programming Language :: Python :: 3 :: Only',
