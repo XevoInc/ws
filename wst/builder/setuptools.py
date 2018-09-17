@@ -62,6 +62,7 @@ class SetuptoolsBuilder(Builder):
         return call_build(
             ('pip3',
              'install',
+             '--user',
              '--build=%s' % build_dir,
              '.'),
             cwd=source_dir,
