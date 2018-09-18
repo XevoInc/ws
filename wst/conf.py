@@ -440,41 +440,41 @@ def expand_var(s, var, expansions):
     return ':'.join(results)
 
 
-def get_build_env(ws, d, proj):
-    '''Gets the environment that should be set during builds (and for the env
-    command) for a given project.'''
-    build_env = os.environ.copy()
-
-    pkgconfig_path = []
-    ld_library_path = []
-    deps = dependency_closure(d, [proj])
-
-    for dep in deps:
-        pkgconfig_path.extend(get_pkgconfig_paths(ws, dep))
-        ld_library_path.extend(get_lib_paths(ws, dep))
-
-    merge_var(build_env, 'PKG_CONFIG_PATH', pkgconfig_path)
-    merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
+def _merge_build_env(ws, d, proj, env):
+    '''Merges the build environment for a single project into the given env.
+    This is a helper function called by get_build_env for each dependency of a
+    given project.'''
+    pkgconfig_paths = get_pkgconfig_paths(ws, proj)
+    ld_library_paths = get_lib_paths(ws, proj)
+    merge_var(env, 'PKG_CONFIG_PATH', pkgconfig_paths)
+    merge_var(env, 'LD_LIBRARY_PATH', ld_library_paths)
 
     # Add in any builder-specific environment tweaks.
-    for dep in deps:
-        get_builder(d, dep).env(
-            proj,
-            get_install_dir(ws, dep),
-            get_build_dir(ws, dep),
-            build_env)
+    get_builder(d, proj).env(
+        proj,
+        get_install_dir(ws, proj),
+        get_build_dir(ws, proj),
+        env)
 
     # Add in any project-specific environment variables specified in the
     # manifest.
     lib_paths = get_lib_paths(ws, proj)
     install_dir = get_install_dir(ws, proj)
+    for var, val in d[proj]['env'].items():
+        val = expand_var(val, 'LIBDIR', lib_paths)
+        val = expand_var(val, 'PREFIX', [install_dir])
+        # Expand every environment variable.
+        for k, v in env.items():
+            val = expand_var(val, k, [v])
+        merge_var(env, var, [val])
+
+
+def get_build_env(ws, d, proj):
+    '''Gets the environment that should be set during builds (and for the env
+    command) for a given project.'''
+    build_env = os.environ.copy()
+    deps = dependency_closure(d, [proj])
     for dep in deps:
-        for var, val in d[dep]['env'].items():
-            val = expand_var(val, 'LIBDIR', lib_paths)
-            val = expand_var(val, 'PREFIX', [install_dir])
-            # Expand every environment variable.
-            for k, v in build_env.items():
-                val = expand_var(val, k, [v])
-            merge_var(build_env, var, [val])
+        _merge_build_env(ws, d, dep, build_env)
 
     return build_env
