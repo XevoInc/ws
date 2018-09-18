@@ -64,7 +64,7 @@ def handler(ws, args):
                       'it yet?' % args.project)
 
     d = parse_manifest(args.root)
-    build_env = get_build_env(ws, args.project, d)
+    build_env = get_build_env(ws, d, args.project)
     bin_dir = os.path.join(get_install_dir(ws, args.project), 'bin')
     merge_var(build_env, 'PATH', [build_dir, bin_dir])
 

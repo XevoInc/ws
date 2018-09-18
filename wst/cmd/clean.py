@@ -82,12 +82,12 @@ def force_clean(ws, proj):
 def polite_clean(root, ws, proj, d):
     '''Performs a polite-clean of a project, calling the underlying build
     system of a project and asking it to clean itself.'''
-    builder = get_builder(proj, d)
+    builder = get_builder(d, proj)
     build_dir = get_build_dir(ws, proj)
     if not os.path.exists(build_dir):
         return
 
-    build_env = get_build_env(ws, proj, d)
+    build_env = get_build_env(ws, d, proj)
     prefix = get_install_dir(ws, proj)
     source_dir = get_source_dir(root, d, proj)
     builder.clean(proj, prefix, source_dir, build_dir, build_env)

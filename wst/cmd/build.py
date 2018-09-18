@@ -105,10 +105,10 @@ def build(root, ws, proj, d, current, ws_config, force):
         invalidate_checksum(ws, downstream_dep)
 
     # Add envs to find all projects on which this project is dependent.
-    build_env = get_build_env(ws, proj, d)
+    build_env = get_build_env(ws, d, proj)
 
     # Configure.
-    builder = get_builder(proj, d)
+    builder = get_builder(d, proj)
     prefix = get_install_dir(ws, proj)
     if needs_configure:
         success = builder.conf(

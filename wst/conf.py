@@ -395,15 +395,15 @@ _BUILD_TOOLS = {
 }
 
 
-def get_builder(project, d):
+def get_builder(d, proj):
     '''Returns the build properties for a given project. This function should
     be used instead of directly referencing _BUILD_TOOLS.'''
-    build = d[project]['build']
+    build = d[proj]['build']
     try:
         builder = _BUILD_TOOLS[build]
     except KeyError:
         raise WSError('unknown build tool %s for project %s'
-                      % (build, project))
+                      % (build, proj))
 
     return builder
 
@@ -440,7 +440,7 @@ def expand_var(s, var, expansions):
     return ':'.join(results)
 
 
-def get_build_env(ws, proj, d):
+def get_build_env(ws, d, proj):
     '''Gets the environment that should be set during builds (and for the env
     command) for a given project.'''
     build_env = os.environ.copy()
@@ -458,7 +458,7 @@ def get_build_env(ws, proj, d):
 
     # Add in any builder-specific environment tweaks.
     for dep in deps:
-        get_builder(dep, d).env(
+        get_builder(d, dep).env(
             proj,
             get_install_dir(ws, dep),
             get_build_dir(ws, dep),
