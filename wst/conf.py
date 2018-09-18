@@ -455,6 +455,7 @@ def get_build_env(ws, proj, d):
 
     merge_var(build_env, 'PKG_CONFIG_PATH', pkgconfig_path)
     merge_var(build_env, 'LD_LIBRARY_PATH', ld_library_path)
+
     # Add in any builder-specific environment tweaks.
     for dep in deps:
         get_builder(dep, d).env(
@@ -463,14 +464,17 @@ def get_build_env(ws, proj, d):
             get_build_dir(ws, dep),
             build_env)
 
+    # Add in any project-specific environment variables specified in the
+    # manifest.
     lib_paths = get_lib_paths(ws, proj)
     install_dir = get_install_dir(ws, proj)
-    for var, val in d[proj]['env'].items():
-        val = expand_var(val, 'LIBDIR', lib_paths)
-        val = expand_var(val, 'PREFIX', [install_dir])
-        # Expand every environment variable.
-        for k, v in build_env.items():
-            val = expand_var(val, k, [v])
-        merge_var(build_env, var, [val])
+    for dep in deps:
+        for var, val in d[dep]['env'].items():
+            val = expand_var(val, 'LIBDIR', lib_paths)
+            val = expand_var(val, 'PREFIX', [install_dir])
+            # Expand every environment variable.
+            for k, v in build_env.items():
+                val = expand_var(val, k, [v])
+            merge_var(build_env, var, [val])
 
     return build_env
