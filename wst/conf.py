@@ -56,8 +56,7 @@ def parse_manifest_file(root, manifest):
         with open(manifest, 'r') as f:
             d = yaml.load(f)
     except IOError:
-        raise WSError('ws manifest %s not found; please run repo init.'
-                      % manifest)
+        raise WSError('ws manifest %s not found' % manifest)
 
     # Validate.
     required = {'build'}
