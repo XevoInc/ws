@@ -107,8 +107,11 @@ def handler(_, args):
     if args.manifest_source == 'repo':
         parent = os.path.realpath(os.path.join(root, os.pardir))
         base = os.path.join(parent, '.repo', 'manifests')
-    elif args.manifest_source == 'abs':
+    elif args.manifest_source == 'fs':
         base = '.'
+    else:
+        raise NotImplemented('Manifest source %s should be implemented'
+                             % args.manifest_source)
     manifest = os.path.join(base, args.manifest)
     if os.path.isdir(manifest):
         # If -m points to a directory instead of a file, assume there is a file
