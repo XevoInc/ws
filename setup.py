@@ -35,7 +35,7 @@ with open(readme_path, 'r') as f:
 
 setuptools.setup(
     name='wst',
-    version='0.1.2',
+    version='0.1.3',
     description='A lightweight tool for managing a workspace of repositories',
     long_description=long_desc,
     long_description_content_type='text/markdown',
