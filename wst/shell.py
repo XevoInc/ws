@@ -53,11 +53,11 @@ def call(cmd, **kwargs):
         subprocess.check_call(cmd, **kwargs)
 
 
-def call_output(cmd, env=None, text=True):
+def call_output(cmd, env=None, text=True, override=False):
     '''Calls a given command with the given environment, returning the
     output. Note that we assume the output is UTF-8.'''
     log_cmd(cmd)
-    if not dry_run():
+    if (not dry_run()) or override:
         out = subprocess.check_output(cmd, env=env)
         if text:
             out = out.decode('utf-8')

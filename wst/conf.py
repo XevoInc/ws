@@ -289,7 +289,8 @@ def get_host_triplet():  # noqa: E302
     '''Gets the GCC host triplet for the current machine.'''
     global _HOST_TRIPLET
     if _HOST_TRIPLET is None:
-        _HOST_TRIPLET = call_output(['gcc', '-dumpmachine']).rstrip()
+        _HOST_TRIPLET = call_output(['gcc', '-dumpmachine'], override=True)
+        _HOST_TRIPLET = _HOST_TRIPLET.rstrip()
     return _HOST_TRIPLET
 
 
