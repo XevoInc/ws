@@ -188,6 +188,14 @@ def parse_args():
     return args, parser, ws_dir
 
 
+def check_tool(tool):
+    '''Check if the given tool exists in the PATH. If not, print an error and
+    exit.'''
+    if shutil.which(tool) is None:
+        print('Cannot find %s; please install it.' % tool, file=sys.stderr)
+        return 1
+
+
 def main():
     '''Entrypoint.'''
     logging.basicConfig(format=_LOG_FORMAT, level=logging.WARNING)
@@ -197,10 +205,9 @@ def main():
         parser.print_help()
         return 1
 
-    # Sanity check for git.
-    if shutil.which('git') is None:
-        print('Cannot find git; please install it.', file=sys.stderr)
-        return 1
+    # Sanity check for required tools.
+    check_tool('git')
+    check_tool('gcc')
 
     handler = SUBCMDS[args.subcmd]['handler']
     handler(ws_dir, args)
