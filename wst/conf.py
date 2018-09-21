@@ -81,10 +81,9 @@ def parse_manifest_file(root, manifest):
         except KeyError:
             deps = tuple()
         else:
-            if isinstance(deps, str):
-                deps = (deps,)
-            else:
-                deps = tuple(deps)
+            if not isinstance(deps, list):
+                raise WSError('deps key in project %s must be a list' % proj)
+            deps = tuple(deps)
         props['deps'] = deps
 
         try:
