@@ -32,6 +32,11 @@ from wst.conf import (
     get_ws_dir,
     parse_manifest
 )
+from wst.shell import (
+    remove,
+    rename,
+    symlink
+)
 
 
 def args(parser):
@@ -68,8 +73,8 @@ def handler(ws, args):
         raise WSError('Workspace %s already exists; please delete it first if '
                       'you want to do this rename' % args.new_ws)
 
-    os.rename(old_ws_dir, new_ws_dir)
+    rename(old_ws_dir, new_ws_dir)
     default_link = get_default_ws_link(args.root)
     if os.readlink(default_link) == args.old_ws:
-        os.unlink(default_link)
-        os.symlink(args.new_ws, default_link)
+        remove(default_link)
+        symlink(args.new_ws, default_link)

@@ -1,3 +1,6 @@
+import logging
+
+
 class WSError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
@@ -14,3 +17,13 @@ def set_dry_run():
     '''Sets whether or not to use dry run mode.'''
     global _DRY_RUN
     _DRY_RUN = True
+
+
+def log(msg):
+    '''Logs a message.'''
+    logging.debug(msg)
+
+
+def log_cmd(cmd):
+    '''Logs a given command being run.'''
+    log(' '.join(cmd))

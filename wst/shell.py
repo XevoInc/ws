@@ -23,12 +23,43 @@
 # SOFTWARE.
 #
 
-import logging
 import os
 import subprocess
 
 
-from wst import dry_run
+from wst import (
+    dry_run,
+    log,
+    log_cmd
+)
+
+
+def mkdir(path):
+    '''Makes a directory.'''
+    log('making directory %s' % path)
+    if not dry_run():
+        os.mkdir(path)
+
+
+def symlink(dest, src):
+    '''Makes a symlink from src to dest.'''
+    log('making symlink %s --> %s' % (src, dest))
+    if not dry_run():
+        os.symlink(dest, src)
+
+
+def rename(old, new):
+    '''Renames the given path.'''
+    log('renaming %s --> %s' % (old, new))
+    if not dry_run():
+        os.rename(old, new)
+
+
+def remove(path):
+    '''Removes the given path.'''
+    log('removing %s' % path)
+    if not dry_run():
+        os.unlink(path)
 
 
 def get_shell():
@@ -38,11 +69,6 @@ def get_shell():
     except KeyError:
         # Default, should exist on all systems.
         return '/bin/sh'
-
-
-def log_cmd(cmd):
-    '''Logs a given command being run.'''
-    logging.debug(' '.join(cmd))
 
 
 def call(cmd, **kwargs):

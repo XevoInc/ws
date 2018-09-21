@@ -31,11 +31,13 @@ import yaml
 
 from wst import (
     dry_run,
+    log,
     WSError
 )
 from wst.shell import (
     call_git,
     call_output,
+    remove
 )
 
 from wst.builder.cmake import CMakeBuilder
@@ -209,6 +211,10 @@ def update_config(ws, config):
     '''Atomically updates the current ws config using the standard trick of
     writing to a tmp file in the same filesystem, syncing that file, and
     renaming it to replace the current contents.'''
+    log('updating config at %s' % ws)
+    if dry_run():
+        return
+
     config_path = get_ws_config_path(ws)
     tmpfile = '%s.tmp' % config_path
     with open(tmpfile, 'w') as f:
@@ -333,7 +339,7 @@ def invalidate_checksum(ws, proj):
         return
 
     try:
-        os.remove(get_checksum_file(ws, proj))
+        remove(get_checksum_file(ws, proj))
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise

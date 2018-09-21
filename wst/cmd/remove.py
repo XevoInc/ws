@@ -31,6 +31,10 @@ from wst.conf import (
     get_default_ws_link,
     get_ws_dir
 )
+from wst.shell import (
+    remove,
+    symlink
+)
 
 
 def args(parser):
@@ -73,5 +77,5 @@ def handler(_, args):
     # We are good to go.
     shutil.rmtree(ws_dir)
     if is_default:
-        os.unlink(default_link)
-        os.symlink(args.default, default_link)
+        remove(default_link)
+        symlink(args.default, default_link)

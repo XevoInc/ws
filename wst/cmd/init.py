@@ -40,6 +40,10 @@ from wst.conf import (
     parse_manifest_file,
     update_config
 )
+from wst.shell import (
+    mkdir,
+    symlink
+)
 
 
 MANIFEST_SOURCES = ('fs', 'repo')
@@ -137,7 +141,7 @@ def handler(_, args):
     parse_manifest_file(root, abs_manifest)
 
     try:
-        os.mkdir(root)
+        mkdir(root)
         new_root = True
     except OSError as e:
         if e.errno != errno.EEXIST:
@@ -145,7 +149,7 @@ def handler(_, args):
         new_root = False
 
     try:
-        os.mkdir(ws_dir)
+        mkdir(ws_dir)
         new_ws = True
     except OSError as e:
         if e.errno != errno.EEXIST:
@@ -155,8 +159,8 @@ def handler(_, args):
     if new_ws:
         # This is a brand-new workspace, so populate the initial workspace
         # directories.
-        os.mkdir(get_toplevel_build_dir(ws_dir))
-        os.mkdir(get_checksum_dir(ws_dir))
+        mkdir(get_toplevel_build_dir(ws_dir))
+        mkdir(get_checksum_dir(ws_dir))
         config = {
             'type': args.type,
             'taint': False
@@ -166,5 +170,5 @@ def handler(_, args):
     if new_root:
         # This is a brand new root .ws directory, so populate the initial
         # symlink defaults.
-        os.symlink(ws, get_default_ws_link(root))
-        os.symlink(manifest, get_manifest_link(root))
+        symlink(ws, get_default_ws_link(root))
+        symlink(manifest, get_manifest_link(root))

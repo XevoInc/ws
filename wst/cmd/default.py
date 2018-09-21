@@ -30,6 +30,10 @@ from wst.conf import (
     get_default_ws_link,
     get_ws_dir
 )
+from wst.shell import (
+    remove,
+    symlink
+)
 
 
 def args(parser):
@@ -54,9 +58,9 @@ def handler(_, args):
 
     ws_dir = get_ws_dir(args.root, args.default_ws)
 
-    os.remove(link)
+    remove(link)
     if not os.path.exists(ws_dir):
         raise WSError('Cannot make non-existent workspace %s the default' %
                       args.default_ws)
 
-    os.symlink(args.default_ws, link)
+    symlink(args.default_ws, link)

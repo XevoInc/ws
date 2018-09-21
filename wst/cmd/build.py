@@ -47,6 +47,10 @@ from wst.conf import (
     parse_manifest,
     set_stored_checksum
 )
+from wst.shell import (
+    symlink,
+    mkdir
+)
 
 
 def args(parser):
@@ -77,7 +81,7 @@ def build(root, ws, proj, d, current, ws_config, force):
     # Make the project directory if needed.
     proj_dir = get_proj_dir(ws, proj)
     try:
-        os.mkdir(proj_dir)
+        mkdir(proj_dir)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -86,7 +90,7 @@ def build(root, ws, proj, d, current, ws_config, force):
     build_dir = get_build_dir(ws, proj)
     needs_configure = os.path.exists(build_dir)
     try:
-        os.mkdir(build_dir)
+        mkdir(build_dir)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -98,7 +102,7 @@ def build(root, ws, proj, d, current, ws_config, force):
     source_link = get_source_link(ws, proj)
     if not os.path.exists(source_link):
         source_dir = get_source_dir(root, d, proj)
-        os.symlink(source_dir, source_link)
+        symlink(source_dir, source_link)
 
     # Invalidate the checksums for any downstream projects.
     for downstream_dep in d[proj]['downstream']:
