@@ -115,21 +115,27 @@ manages:
 - Any special builder options needed (e.g. `-DCMAKE_` type of options). These
   options are passed straight through into each build system without
   modification.
+- Any other manifests that should be included. Include paths can be absolute or
+  relative. If they are relative, they are interpreted relative to the parent
+  directory of the including manifest.
 
 The syntax is as follows:
 ```
-some-project:
-    build: meson
-    deps:
-        - gstreamer
-        - ...
-    env:
-        GST_PLUGIN_PATH: ${LIBDIR}/gstreamer-1.0
+includes:
+    - some-other-manifest.yaml
+projects:
+    some-project:
+        build: meson
+        deps:
+            - gstreamer
+            - ...
+        env:
+            GST_PLUGIN_PATH: ${LIBDIR}/gstreamer-1.0
 
-gstreamer:
-    build: meson
-    options:
-        - -D gtk_doc=disabled
+    gstreamer:
+        build: meson
+        options:
+            - -D gtk_doc=disabled
 ```
 
 In this case, `some-project` builds with `meson`, and requires `gstreamer` and
