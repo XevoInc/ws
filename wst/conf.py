@@ -445,7 +445,7 @@ def merge_var(env, var, val):
     else:
         entries = current.split(':')
         if val not in entries:
-            entries = current.split(':') + val
+            entries = val + entries
     env[var] = ':'.join(entries)
 
 
