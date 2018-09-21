@@ -88,6 +88,13 @@ def parse_manifest_file(root, manifest):
             if not isinstance(props['env'], dict):
                 raise WSError('env key in project %s must be a dictionary'
                               % proj)
+            for k, v in props['env'].items():
+                if not isinstance(k, str):
+                    raise WSError('env key %s in project %s must be a string' %
+                                  (k, proj))
+                if not isinstance(v, str):
+                    raise WSError('env value %s (key "%s") in project %s '
+                                  'must be a string' % (v, k, proj))
         else:
             props['env'] = {}
 
