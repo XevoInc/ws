@@ -31,8 +31,6 @@ from wst import WSError
 from wst.conf import (
     get_build_dir,
     get_build_env,
-    get_install_dir,
-    merge_var,
     parse_manifest
 )
 from wst.shell import get_shell

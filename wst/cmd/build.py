@@ -130,7 +130,13 @@ def build(root, ws, proj, d, current, ws_config, force):
             return False
 
     # Build.
-    success = builder.build(proj, prefix, source_dir, build_dir, build_env, d[proj]['options'])
+    success = builder.build(
+        proj,
+        prefix,
+        source_dir,
+        build_dir,
+        build_env,
+        d[proj]['options'])
     if success:
         set_stored_checksum(ws, proj, current)
 
