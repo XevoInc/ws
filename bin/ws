@@ -45,6 +45,7 @@ from wst.conf import (
     get_default_ws_link,
     get_ws_dir
 )
+from wst.version import version
 
 _LOG_FORMAT = '%(message)s'
 
@@ -139,6 +140,10 @@ def parse_args():
         default=False,
         required=False,
         help='Verbose output')
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=version())
 
     subparsers = parser.add_subparsers(help='subcommands')
     for cmd, d in SUBCMDS.items():

@@ -25,6 +25,7 @@
 
 import os
 import setuptools
+from wst.version import version
 
 
 # Keep the long description in sync with the README.
@@ -35,7 +36,7 @@ with open(readme_path, 'r') as f:
 
 setuptools.setup(
     name='wst',
-    version='0.1.3',
+    version=version(),
     description='A lightweight tool for managing a workspace of repositories',
     long_description=long_desc,
     long_description_content_type='text/markdown',
