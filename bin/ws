@@ -183,7 +183,7 @@ def parse_args():
     logging.basicConfig(format=_LOG_FORMAT, level=level)
 
     if args.dry_run:
-        wst.shell.set_dry_run()
+        wst.set_dry_run()
 
     return args, parser, ws_dir
 
