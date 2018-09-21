@@ -76,29 +76,39 @@ def parse_manifest_file(root, manifest):
     # Add computed keys.
     parent = os.path.realpath(os.path.join(root, os.pardir))
     for proj, props in d.items():
-        if 'deps' in props:
-            if isinstance(props['deps'], str):
-                props['deps'] = (props['deps'],)
-            else:
-                props['deps'] = tuple(props['deps'])
+        try:
+            deps = props['deps']
+        except KeyError:
+            deps = tuple()
         else:
-            props['deps'] = tuple()
+            if isinstance(deps, str):
+                deps = (deps,)
+            else:
+                deps = tuple(deps)
+        props['deps'] = deps
 
-        if 'env' in props:
-            if not isinstance(props['env'], dict):
+        try:
+            env = props['env']
+        except KeyError:
+            env = {}
+        else:
+            if not isinstance(env, dict):
                 raise WSError('env key in project %s must be a dictionary'
                               % proj)
-            for k, v in props['env'].items():
+            for k, v in env.items():
                 if not isinstance(k, str):
                     raise WSError('env key %s in project %s must be a string' %
                                   (k, proj))
                 if not isinstance(v, str):
                     raise WSError('env value %s (key "%s") in project %s '
                                   'must be a string' % (v, k, proj))
-        else:
-            props['env'] = {}
+        props['env'] = env
 
-        if 'options' in props:
+        try:
+            options = props['options']
+        except KeyError:
+            options = tuple()
+        else:
             if not isinstance(props['options'], list):
                 raise WSError('options key in project %s must be a list' %
                               proj)
@@ -106,9 +116,8 @@ def parse_manifest_file(root, manifest):
                 if not isinstance(opt, str):
                     raise WSError('option %s in project %s must be a string' %
                                   (opt, proj))
-            props['options'] = tuple(opt.split() for opt in props['options'])
-        else:
-            props['options'] = tuple()
+            options = tuple(opt.split() for opt in props['options'])
+        props['options'] = options
 
         props['path'] = os.path.join(parent, proj)
         props['downstream'] = []
