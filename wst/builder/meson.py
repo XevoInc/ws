@@ -39,18 +39,27 @@ class MesonBuilder(Builder):
         pass
 
     @classmethod
-    def conf(cls, proj, prefix, source_dir, build_dir, env, build_type):
-        '''Calls configure using the Meson build itself.'''
-        cmd = (
+    def conf(cls,
+             proj,
+             prefix,
+             source_dir,
+             build_dir,
+             env,
+             build_type,
+             options):
+        '''Calls configure using Meson.'''
+        cmd = [
             'meson',
             '--buildtype', build_type,
-            '--prefix', prefix,
-            build_dir,
-            source_dir)
+            '--prefix', prefix]
+        for opt in options:
+            cmd.extend(opt)
+        cmd.append(build_dir)
+        cmd.append(source_dir)
         return call_configure(cmd, env=env)
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env):
+    def build(cls, proj, prefix, source_dir, build_dir, env, options):
         '''Calls build using the Meson build itself.'''
         return call_build(('ninja', '-C', build_dir, 'install'), env=env)
 

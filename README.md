@@ -112,6 +112,9 @@ manages:
 - What build system they use (currently supports `meson` and `cmake`).
 - What dependencies they have on other projects managed by `ws`.
 - Any special environment variables they need.
+- Any special builder options needed (e.g. `-DCMAKE_` type of options). These
+  options are passed straight through into each build system without
+  modification.
 
 The syntax is as follows:
 ```
@@ -125,8 +128,8 @@ some-project:
 
 gstreamer:
     build: meson
-    deps:
-        - ...
+    options:
+        - -D gtk_doc=disabled
 ```
 
 In this case, `some-project` builds with `meson`, and requires `gstreamer` and

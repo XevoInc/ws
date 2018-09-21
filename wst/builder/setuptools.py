@@ -50,23 +50,30 @@ class SetuptoolsBuilder(Builder):
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
-    def conf(cls, proj, prefix, source_dir, build_dir, env, build_type):
+    def conf(cls,
+             proj,
+             prefix,
+             source_dir,
+             build_dir,
+             env,
+             build_type,
+             options):
         '''Calls configure using setuptools.'''
         # setuptools doesn't have a configure step.
         return True
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env):
+    def build(cls, proj, prefix, source_dir, build_dir, env, options):
         '''Calls build using setuptools.'''
         env['PYTHONUSERBASE'] = prefix
-        return call_build(
-            ('pip3',
-             'install',
-             '--user',
-             '--build=%s' % build_dir,
-             '.'),
-            cwd=source_dir,
-            env=env)
+        cmd = ['pip3',
+               'install',
+               '--user',
+               '--build=%s' % build_dir]
+        for opt in options:
+            cmd.extend(opt)
+        cmd.append('.')
+        return call_build(cmd, cwd=source_dir, env=env)
 
     @classmethod
     def clean(cls, proj, prefix, source_dir, build_dir, env):

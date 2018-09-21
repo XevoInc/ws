@@ -42,17 +42,26 @@ class CMakeBuilder(Builder):
         pass
 
     @classmethod
-    def conf(cls, proj, prefix, source_dir, build_dir, env, build_type):
+    def conf(cls,
+             proj,
+             prefix,
+             source_dir,
+             build_dir,
+             env,
+             build_type,
+             options):
         '''Calls configure using CMake.'''
-        cmd = (
+        cmd = [
             'cmake',
             '-DCMAKE_BUILD_TYPE=%s' % build_type,
-            '-DCMAKE_INSTALL_PREFIX=%s' % prefix,
-            source_dir)
+            '-DCMAKE_INSTALL_PREFIX=%s' % prefix]
+        for opt in options:
+            cmd.extend(opt)
+        cmd.append(source_dir)
         return call_configure(cmd, env=env, cwd=build_dir)
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env):
+    def build(cls, proj, prefix, source_dir, build_dir, env, options):
         '''Calls build using CMake.'''
         return call_build(
             ('make',

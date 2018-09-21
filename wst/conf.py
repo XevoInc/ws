@@ -60,7 +60,7 @@ def parse_manifest_file(root, manifest):
 
     # Validate.
     required = {'build'}
-    optional = {'deps', 'env'}
+    optional = {'deps', 'env', 'options'}
     total = required.union(optional)
     for proj, props in d.items():
         for prop in required:
@@ -97,6 +97,18 @@ def parse_manifest_file(root, manifest):
                                   'must be a string' % (v, k, proj))
         else:
             props['env'] = {}
+
+        if 'options' in props:
+            if not isinstance(props['options'], list):
+                raise WSError('options key in project %s must be a list' %
+                              proj)
+            for opt in props['options']:
+                if not isinstance(opt, str):
+                    raise WSError('option %s in project %s must be a string' %
+                                  (opt, proj))
+            props['options'] = tuple(opt.split() for opt in props['options'])
+        else:
+            props['options'] = tuple()
 
         props['path'] = os.path.join(parent, proj)
         props['downstream'] = []
