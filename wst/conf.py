@@ -466,21 +466,23 @@ def expand_var(s, var, expansions):
     return ':'.join(results)
 
 
-def _merge_build_env(ws, d, proj, env):
+def _merge_build_env(ws, d, proj, env, include_path):
     '''Merges the build environment for a single project into the given env.
     This is a helper function called by get_build_env for each dependency of a
     given project.'''
+    build_dir = get_build_dir(ws, proj)
+    install_dir = get_install_dir(ws, proj)
+    bin_dir = os.path.join(install_dir, 'bin')
+
     pkgconfig_paths = get_pkgconfig_paths(ws, proj)
     ld_library_paths = get_lib_paths(ws, proj)
     merge_var(env, 'PKG_CONFIG_PATH', pkgconfig_paths)
     merge_var(env, 'LD_LIBRARY_PATH', ld_library_paths)
+    if include_path:
+        merge_var(env, 'PATH', [build_dir, bin_dir])
 
     # Add in any builder-specific environment tweaks.
-    get_builder(d, proj).env(
-        proj,
-        get_install_dir(ws, proj),
-        get_build_dir(ws, proj),
-        env)
+    get_builder(d, proj).env(proj, install_dir, build_dir, env)
 
     # Add in any project-specific environment variables specified in the
     # manifest.
@@ -495,12 +497,12 @@ def _merge_build_env(ws, d, proj, env):
         merge_var(env, var, [val])
 
 
-def get_build_env(ws, d, proj):
+def get_build_env(ws, d, proj, include_path=False):
     '''Gets the environment that should be set during builds (and for the env
     command) for a given project.'''
     build_env = os.environ.copy()
     deps = dependency_closure(d, [proj])
     for dep in deps:
-        _merge_build_env(ws, d, dep, build_env)
+        _merge_build_env(ws, d, dep, build_env, include_path)
 
     return build_env
