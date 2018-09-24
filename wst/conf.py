@@ -214,11 +214,14 @@ def parse_manifest_file(root, manifest):
     for proj, props in projects.items():
         deps = props['deps']
         for dep in deps:
-            if dep not in projects:
+            try:
+                dep_props = projects[dep]
+            except KeyError:
                 raise WSError('project %s dependency %s not found in the '
                               'manifest' % (proj, dep))
-            # Reverse-dependency list of downstream projects.
-            projects[dep]['downstream'].append(proj)
+            else:
+                # Reverse-dependency list of downstream projects.
+                dep_props['downstream'].append(proj)
 
     return projects
 
