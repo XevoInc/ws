@@ -123,6 +123,7 @@ The syntax is as follows:
 ```
 includes:
     - some-other-manifest.yaml
+
 projects:
     some-project:
         build: meson
