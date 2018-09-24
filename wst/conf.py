@@ -52,14 +52,94 @@ VALID_CONFIG = {
 }
 
 
-def parse_yaml(manifest):
-    '''Parses the given manifest for YAML correctness, or bails if something
-    went wrong.'''
+_REQUIRED_KEYS = {'build'}
+_OPTIONAL_KEYS = {'deps', 'env', 'options'}
+_ALL_KEYS = _REQUIRED_KEYS.union(_OPTIONAL_KEYS)
+def parse_yaml(root, manifest):  # noqa: E302
+    '''Parses the given manifest for YAML and syntax correctness, or bails if
+    something went wrong.'''
     try:
         with open(manifest, 'r') as f:
             d = yaml.load(f)
     except IOError:
         raise WSError('ws manifest %s not found' % manifest)
+
+    try:
+        includes = d['includes']
+    except KeyError:
+        includes = ()
+        d['includes'] = includes
+    else:
+        if not isinstance(includes, list):
+            raise WSError('includes key %s in %s is not a list'
+                          % (includes, manifest))
+        if len(includes) == 0:
+            raise WSError('include in %s is an empty list!' % manifest)
+
+    try:
+        projects = d['projects']
+    except KeyError:
+        if len(includes) == 0:
+            raise WSError('projects and includes keys missing in manifest %s'
+                          % manifest)
+        else:
+            return d
+
+    for proj, props in projects.items():
+        for prop in _REQUIRED_KEYS:
+            if prop not in props:
+                raise WSError('%s key missing from project %s in manifest'
+                              % (prop, proj))
+
+        for prop in props:
+            if prop not in _ALL_KEYS:
+                raise WSError('unknown key %s for project %s specified in '
+                              'manifest' % (prop, proj))
+
+    # Add computed keys.
+    parent = os.path.realpath(os.path.join(root, os.pardir))
+    for proj, props in projects.items():
+        try:
+            deps = props['deps']
+        except KeyError:
+            props['deps'] = ()
+        else:
+            if not isinstance(deps, list):
+                raise WSError('deps key in project %s must be a list' % proj)
+            if len(set(deps)) != len(deps):
+                raise WSError('project %s has duplicate dependency' % proj)
+
+        try:
+            env = props['env']
+        except KeyError:
+            props['env'] = {}
+        else:
+            if not isinstance(env, dict):
+                raise WSError('env key in project %s must be a dictionary'
+                              % proj)
+            for k, v in env.items():
+                if not isinstance(k, str):
+                    raise WSError('env key %s in project %s must be a string' %
+                                  (k, proj))
+                if not isinstance(v, str):
+                    raise WSError('env value %s (key "%s") in project %s '
+                                  'must be a string' % (v, k, proj))
+
+        try:
+            options = props['options']
+        except KeyError:
+            props['options'] = ()
+        else:
+            if not isinstance(props['options'], list):
+                raise WSError('options key in project %s must be a list' %
+                              proj)
+            for opt in props['options']:
+                if not isinstance(opt, str):
+                    raise WSError('option %s in project %s must be a string' %
+                                  (opt, proj))
+            options = tuple(opt.split() for opt in props['options'])
+            props['options'] = options
+        props['path'] = os.path.join(parent, proj)
 
     return d
 
@@ -71,12 +151,6 @@ def include_paths(d, manifest):
         includes = d['includes']
     except KeyError:
         return ()
-
-    if not isinstance(includes, list):
-        raise WSError('includes key %s in %s is not a list'
-                      % (includes, manifest))
-    if len(includes) == 0:
-        raise WSError('include in %s is an empty list!' % manifest)
 
     for i, path in enumerate(includes):
         if path[0] != '/':
@@ -108,7 +182,7 @@ def merge_manifest(parent, parent_path, child, child_path):
     parent_projects.update(child_projects)
 
 
-def merge_includes(d, parent_manifest):
+def merge_includes(root, d, parent_manifest):
     '''Recursively merge all the include lines from the manifest into the given
     dictionary. Include paths are relative to the including manifest's parent
     directory.'''
@@ -116,7 +190,7 @@ def merge_includes(d, parent_manifest):
     queue = collections.deque(included)
     while len(queue) > 0:
         manifest = queue.popleft()
-        d_include = parse_yaml(manifest)
+        d_include = parse_yaml(root, manifest)
         log('merging manifest %s into %s' % (manifest, parent_manifest))
         merge_manifest(d, parent_manifest, d_include, manifest)
         for path in include_paths(d_include, manifest):
@@ -130,90 +204,21 @@ def merge_includes(d, parent_manifest):
 def parse_manifest_file(root, manifest):
     '''Parses the given ws manifest file, returning a dictionary of the
     manifest data.'''
-    d = parse_yaml(manifest)
-    merge_includes(d, manifest)
-
-    try:
-        projects = d['projects']
-    except KeyError:
-        raise WSError('projects key missing in manifest %s' % manifest)
-
-    # Validate.
-    required = {'build'}
-    optional = {'deps', 'env', 'options'}
-    total = required.union(optional)
-    for proj, props in projects.items():
-        for prop in required:
-            if prop not in props:
-                raise WSError('%s key missing from project %s in manifest'
-                              % (prop, proj))
-
-        for prop in props:
-            if prop not in total:
-                raise WSError('unknown key %s for project %s specified in '
-                              'manifest' % (prop, proj))
-
-    # Add computed keys.
-    parent = os.path.realpath(os.path.join(root, os.pardir))
-    for proj, props in projects.items():
-        try:
-            deps = props['deps']
-        except KeyError:
-            deps = tuple()
-        else:
-            if not isinstance(deps, list):
-                raise WSError('deps key in project %s must be a list' % proj)
-            deps = tuple(deps)
-        props['deps'] = deps
-
-        try:
-            env = props['env']
-        except KeyError:
-            env = {}
-        else:
-            if not isinstance(env, dict):
-                raise WSError('env key in project %s must be a dictionary'
-                              % proj)
-            for k, v in env.items():
-                if not isinstance(k, str):
-                    raise WSError('env key %s in project %s must be a string' %
-                                  (k, proj))
-                if not isinstance(v, str):
-                    raise WSError('env value %s (key "%s") in project %s '
-                                  'must be a string' % (v, k, proj))
-        props['env'] = env
-
-        try:
-            options = props['options']
-        except KeyError:
-            options = tuple()
-        else:
-            if not isinstance(props['options'], list):
-                raise WSError('options key in project %s must be a list' %
-                              proj)
-            for opt in props['options']:
-                if not isinstance(opt, str):
-                    raise WSError('option %s in project %s must be a string' %
-                                  (opt, proj))
-            options = tuple(opt.split() for opt in props['options'])
-        props['options'] = options
-
-        props['path'] = os.path.join(parent, proj)
-        props['downstream'] = []
+    d = parse_yaml(root, manifest)
+    merge_includes(root, d, manifest)
 
     # Compute reverse-dependency list.
+    projects = d['projects']
+    for proj, props in projects.items():
+        props['downstream'] = []
     for proj, props in projects.items():
         deps = props['deps']
         for dep in deps:
             if dep not in projects:
-                raise WSError('Project %s dependency %s not found in the '
+                raise WSError('project %s dependency %s not found in the '
                               'manifest' % (proj, dep))
-
             # Reverse-dependency list of downstream projects.
             projects[dep]['downstream'].append(proj)
-
-        if len(set(deps)) != len(deps):
-            raise WSError('Project %s has duplicate dependency' % proj)
 
     return projects
 
