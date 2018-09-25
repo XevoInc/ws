@@ -26,6 +26,7 @@
 import yaml
 
 from wst import WSError
+from wst.cmd import Command
 from wst.conf import (
     get_ws_config,
     update_config,
@@ -33,39 +34,42 @@ from wst.conf import (
 )
 
 
-def args(parser):
-    '''Populates the argument parser for the config subcmd.'''
-    parser.add_argument(
-        '-l', '--list',
-        action='store_true',
-        default=False,
-        help='List the current workspace config')
-    parser.add_argument(
-        'options',
-        action='store',
-        nargs='*',
-        help='Key-value options (format key=value')
+class Config(Command):
+    '''The config command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the config command.'''
+        parser.add_argument(
+            '-l', '--list',
+            action='store_true',
+            default=False,
+            help='List the current workspace config')
+        parser.add_argument(
+            'options',
+            action='store',
+            nargs='*',
+            help='Key-value options (format key=value')
 
+    @classmethod
+    def do(cls, ws, args):
+        '''Executes the config command.'''
+        config = get_ws_config(ws)
+        if args.list:
+            print(yaml.dump(config, default_flow_style=False), end='')
+            return
 
-def handler(ws, args):
-    '''Executes the config subcmd.'''
-    config = get_ws_config(ws)
-    if args.list:
-        print(yaml.dump(config, default_flow_style=False), end='')
-        return
+        for arg in args.options:
+            split = arg.split('=')
+            if len(split) != 2:
+                raise WSError('option argument %s invalid. format is key=value'
+                              % arg)
+            key, val = split
+            if key not in VALID_CONFIG:
+                raise WSError('unknown key %s' % key)
+            if val not in VALID_CONFIG[key]:
+                raise WSError('unknown value %s' % val)
+            if key == 'type' and config[key] != val:
+                config['taint'] = True
+            config[key] = val
 
-    for arg in args.options:
-        split = arg.split('=')
-        if len(split) != 2:
-            raise WSError('option argument %s invalid. format is key=value'
-                          % arg)
-        key, val = split
-        if key not in VALID_CONFIG:
-            raise WSError('unknown key %s' % key)
-        if val not in VALID_CONFIG[key]:
-            raise WSError('unknown value %s' % val)
-        if key == 'type' and config[key] != val:
-            config['taint'] = True
-        config[key] = val
-
-    update_config(ws, config)
+        update_config(ws, config)

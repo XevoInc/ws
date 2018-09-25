@@ -26,6 +26,7 @@
 import os
 
 from wst import WSError
+from wst.cmd import Command
 from wst.conf import (
     get_default_ws_link,
     get_ws_dir
@@ -36,31 +37,35 @@ from wst.shell import (
 )
 
 
-def args(parser):
-    '''Populates the argument parser for the default subcmd.'''
-    parser.add_argument(
-        metavar='workspace',
-        dest='default_ws',
-        action='store',
-        default=None,
-        nargs='?',
-        help='Workspace to make the default')
+class Default(Command):
+    '''The default command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the default command.'''
+        parser.add_argument(
+            metavar='workspace',
+            dest='default_ws',
+            action='store',
+            default=None,
+            nargs='?',
+            help='Workspace to make the default')
 
 
-def handler(_, args):
-    '''Executes the default subcmd.'''
-    link = get_default_ws_link(args.root)
-    if args.default_ws is None:
-        # Just report what the default currently is.
-        dest = os.path.basename(os.path.realpath(link))
-        print(dest)
-        return
+    @classmethod
+    def do(cls, _, args):
+        '''Executes the default command.'''
+        link = get_default_ws_link(args.root)
+        if args.default_ws is None:
+            # Just report what the default currently is.
+            dest = os.path.basename(os.path.realpath(link))
+            print(dest)
+            return
 
-    ws_dir = get_ws_dir(args.root, args.default_ws)
+        ws_dir = get_ws_dir(args.root, args.default_ws)
 
-    remove(link)
-    if not os.path.exists(ws_dir):
-        raise WSError('Cannot make non-existent workspace %s the default' %
-                      args.default_ws)
+        remove(link)
+        if not os.path.exists(ws_dir):
+            raise WSError('Cannot make non-existent workspace %s the default' %
+                          args.default_ws)
 
-    symlink(args.default_ws, link)
+        symlink(args.default_ws, link)

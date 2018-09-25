@@ -25,6 +25,7 @@
 
 import os
 
+from wst.cmd import Command
 from wst.conf import (
     get_default_ws_name,
     get_manifest_link_name,
@@ -32,27 +33,31 @@ from wst.conf import (
 )
 
 
-def args(parser):
-    '''Populates the argument parser for the list subcmd.'''
-    parser.add_argument(
-        '-w', '--workspaces',
-        action='store_true',
-        dest='list_workspaces',
-        default=False,
-        help='List workspaces instead of projects')
 
+class List(Command):
+    '''The list command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the list subcmd.'''
+        parser.add_argument(
+            '-w', '--workspaces',
+            action='store_true',
+            dest='list_workspaces',
+            default=False,
+            help='List workspaces instead of projects')
 
-def handler(_, args):
-    '''Executes the list subcmd.'''
-    if args.list_workspaces:
-        dirs = os.listdir(args.root)
-        for ws in dirs:
-            if ws == get_default_ws_name():
-                continue
-            if ws == get_manifest_link_name():
-                continue
-            print(ws)
-    else:
-        d = parse_manifest(args.root)
-        for proj in d:
-            print(proj)
+    @classmethod
+    def do(cls, _, args):
+        '''Executes the list subcmd.'''
+        if args.list_workspaces:
+            dirs = os.listdir(args.root)
+            for ws in dirs:
+                if ws == get_default_ws_name():
+                    continue
+                if ws == get_manifest_link_name():
+                    continue
+                print(ws)
+        else:
+            d = parse_manifest(args.root)
+            for proj in d:
+                print(proj)

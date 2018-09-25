@@ -29,6 +29,7 @@ import multiprocessing
 import os
 
 from wst import WSError
+from wst.cmd import Command
 from wst.conf import (
     calculate_checksum,
     dependency_closure,
@@ -53,21 +54,7 @@ from wst.shell import (
 )
 
 
-def args(parser):
-    '''Populates the argument parser for the build subcmd.'''
-    parser.add_argument(
-        'projects',
-        action='store',
-        nargs='*',
-        help='Build a particular project or projects')
-    parser.add_argument(
-        '-f', '--force',
-        action='store_true',
-        default=False,
-        help='Force a build')
-
-
-def build(root, ws, proj, d, current, ws_config, force):
+def _build(root, ws, proj, d, current, ws_config, force):
     '''Builds a given project.'''
     source_dir = get_source_dir(root, d, proj)
     if not force:
@@ -143,46 +130,63 @@ def build(root, ws, proj, d, current, ws_config, force):
     return success
 
 
-def handler(ws, args):
-    '''Executes the build subcmd.'''
-    ws_config = get_ws_config(get_ws_dir(args.root, ws))
-    if ws_config['taint']:
-        raise WSError('Workspace is tainted from a config change; please do:\n'
-                      'ws clean --force\n'
-                      'And then build again')
+class Build(Command):
+    '''The build command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the build command.'''
+        parser.add_argument(
+            'projects',
+            action='store',
+            nargs='*',
+            help='Build a particular project or projects')
+        parser.add_argument(
+            '-f', '--force',
+            action='store_true',
+            default=False,
+            help='Force a build')
 
-    d = parse_manifest(args.root)
+    @classmethod
+    def do(cls, ws, args):
+        '''Executes the build subcmd.'''
+        ws_config = get_ws_config(get_ws_dir(args.root, ws))
+        if ws_config['taint']:
+            raise WSError('Workspace is tainted from a config change; please do:\n'
+                          'ws clean --force\n'
+                          'And then build again')
 
-    # Validate.
-    for project in args.projects:
-        if project not in d:
-            raise WSError('unknown project %s' % project)
+        d = parse_manifest(args.root)
 
-    if len(args.projects) == 0:
-        projects = d.keys()
-    else:
-        projects = args.projects
+        # Validate.
+        for project in args.projects:
+            if project not in d:
+                raise WSError('unknown project %s' % project)
 
-    # Build in reverse-dependency order.
-    order = dependency_closure(d, projects)
+        if len(args.projects) == 0:
+            projects = d.keys()
+        else:
+            projects = args.projects
 
-    # Get all checksums; since this is a nop build bottle-neck, do it in
-    # parallel. On my machine, this produces a ~20% speedup on a nop
-    # "build-all".
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-    src_dirs = [get_source_dir(args.root, d, proj) for proj in order]
-    checksums = pool.map(calculate_checksum, src_dirs)
+        # Build in reverse-dependency order.
+        order = dependency_closure(d, projects)
 
-    for i, proj in enumerate(order):
-        logging.info('Building %s' % proj)
-        checksum = checksums[i]
-        success = build(
-            args.root,
-            ws,
-            proj,
-            d,
-            checksum,
-            ws_config,
-            args.force)
-        if not success:
-            raise WSError('%s build failed' % proj)
+        # Get all checksums; since this is a nop build bottle-neck, do it in
+        # parallel. On my machine, this produces a ~20% speedup on a nop
+        # "build-all".
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        src_dirs = [get_source_dir(args.root, d, proj) for proj in order]
+        checksums = pool.map(calculate_checksum, src_dirs)
+
+        for i, proj in enumerate(order):
+            logging.info('Building %s' % proj)
+            checksum = checksums[i]
+            success = _build(
+                args.root,
+                ws,
+                proj,
+                d,
+                checksum,
+                ws_config,
+                args.force)
+            if not success:
+                raise WSError('%s build failed' % proj)

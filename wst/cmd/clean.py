@@ -31,6 +31,7 @@ from wst import (
     dry_run,
     WSError
 )
+from wst.cmd import Command
 from wst.conf import (
     get_build_dir,
     get_build_env,
@@ -45,21 +46,7 @@ from wst.conf import (
 from wst.shell import rmtree
 
 
-def args(parser):
-    '''Populates the argument parser for the clean subcmd.'''
-    parser.add_argument(
-        'projects',
-        action='store',
-        nargs='*',
-        help='Clean project(s)')
-    parser.add_argument(
-        '-f', '--force',
-        action='store_true',
-        default=False,
-        help='Force-clean (remove the build directory')
-
-
-def force_clean(ws, proj):
+def _force_clean(ws, proj):
     '''Performs a force-clean of a project, removing all files instead of
     politely calling the clean function of the underlying build system.'''
     build_dir = get_build_dir(ws, proj)
@@ -79,7 +66,7 @@ def force_clean(ws, proj):
     update_config(ws, config)
 
 
-def polite_clean(root, ws, proj, d):
+def _polite_clean(root, ws, proj, d):
     '''Performs a polite-clean of a project, calling the underlying build
     system of a project and asking it to clean itself.'''
     builder = get_builder(d, proj)
@@ -93,28 +80,45 @@ def polite_clean(root, ws, proj, d):
     builder.clean(proj, prefix, source_dir, build_dir, build_env)
 
 
-def clean(root, ws, proj, force, d):
+def _clean(root, ws, proj, force, d):
     '''Cleans a project, forcefully or not.'''
     invalidate_checksum(ws, proj)
 
     if force:
-        force_clean(ws, proj)
+        _force_clean(ws, proj)
     else:
-        polite_clean(root, ws, proj, d)
+        _polite_clean(root, ws, proj, d)
 
 
-def handler(ws, args):
-    '''Executes the clean subcmd.'''
-    # Validate.
-    d = parse_manifest(args.root)
-    for project in args.projects:
-        if project not in d:
-            raise WSError('unknown project %s' % project)
+class Clean(Command):
+    '''The clean command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the clean command.'''
+        parser.add_argument(
+            'projects',
+            action='store',
+            nargs='*',
+            help='Clean project(s)')
+        parser.add_argument(
+            '-f', '--force',
+            action='store_true',
+            default=False,
+            help='Force-clean (remove the build directory')
 
-    if len(args.projects) == 0:
-        projects = d.keys()
-    else:
-        projects = args.projects
+    @classmethod
+    def do(cls, ws, args):
+        '''Executes the clean command.'''
+        # Validate.
+        d = parse_manifest(args.root)
+        for project in args.projects:
+            if project not in d:
+                raise WSError('unknown project %s' % project)
 
-    for project in projects:
-        clean(args.root, ws, project, args.force, d)
+        if len(args.projects) == 0:
+            projects = d.keys()
+        else:
+            projects = args.projects
+
+        for project in projects:
+            _clean(args.root, ws, project, args.force, d)

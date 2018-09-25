@@ -26,6 +26,7 @@
 import os
 
 from wst import WSError
+from wst.cmd import Command
 from wst.conf import (
     get_default_ws_link,
     get_ws_dir
@@ -37,45 +38,48 @@ from wst.shell import (
 )
 
 
-def args(parser):
-    '''Populates the argument parser for the remove subcmd.'''
-    parser.add_argument(
-        metavar='workspace',
-        dest='remove_ws',
-        action='store',
-        help='Workspace to remove')
-    parser.add_argument(
-        '-d', '--default',
-        action='store',
-        default=None,
-        help='New default workspace')
+class Remove(Command):
+    '''The remove command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the remove command.'''
+        parser.add_argument(
+            metavar='workspace',
+            dest='remove_ws',
+            action='store',
+            help='Workspace to remove')
+        parser.add_argument(
+            '-d', '--default',
+            action='store',
+            default=None,
+            help='New default workspace')
 
+    @classmethod
+    def do(cls, _, args):
+        '''Executes the remove command.'''
+        ws_dir = get_ws_dir(args.root, args.remove_ws)
+        if not os.path.exists(ws_dir):
+            raise WSError('workspace %s does not exist' % args.remove_ws)
 
-def handler(_, args):
-    '''Executes the remove subcmd.'''
-    ws_dir = get_ws_dir(args.root, args.remove_ws)
-    if not os.path.exists(ws_dir):
-        raise WSError('workspace %s does not exist' % args.remove_ws)
+        if args.default is not None:
+            default_ws_dir = get_ws_dir(args.root, args.default)
+            if not os.path.exists(default_ws_dir):
+                raise WSError('workspace %s does not exist' % args.default)
 
-    if args.default is not None:
-        default_ws_dir = get_ws_dir(args.root, args.default)
-        if not os.path.exists(default_ws_dir):
-            raise WSError('workspace %s does not exist' % args.default)
+        default_link = get_default_ws_link(args.root)
+        is_default = (os.readlink(default_link) == args.remove_ws)
+        if is_default:
+            # If the deleted workspace is the default, force the user to choose a
+            # new one.
+            if args.default is None:
+                raise WSError('trying to remove the default workspace; must '
+                              'specify a new default via -d/--default')
+        elif args.default:
+            raise WSError('-d/--default is not applicable unless you are removing '
+                          'the default workspace')
 
-    default_link = get_default_ws_link(args.root)
-    is_default = (os.readlink(default_link) == args.remove_ws)
-    if is_default:
-        # If the deleted workspace is the default, force the user to choose a
-        # new one.
-        if args.default is None:
-            raise WSError('trying to remove the default workspace; must '
-                          'specify a new default via -d/--default')
-    elif args.default:
-        raise WSError('-d/--default is not applicable unless you are removing '
-                      'the default workspace')
-
-    # We are good to go.
-    rmtree(ws_dir)
-    if is_default:
-        remove(default_link)
-        symlink(args.default, default_link)
+        # We are good to go.
+        rmtree(ws_dir)
+        if is_default:
+            remove(default_link)
+            symlink(args.default, default_link)

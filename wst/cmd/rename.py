@@ -26,6 +26,7 @@
 import os
 
 from wst import WSError
+from wst.cmd import Command
 from wst.conf import (
     get_build_dir,
     get_default_ws_link,
@@ -39,42 +40,45 @@ from wst.shell import (
 )
 
 
-def args(parser):
-    '''Populates the argument parser for the rename subcmd.'''
-    parser.add_argument(
-        metavar='old-workspace-name',
-        dest='old_ws',
-        action='store',
-        help='Old workspace name')
-    parser.add_argument(
-        metavar='new-workspace-name',
-        dest='new_ws',
-        action='store',
-        help='New workspace name')
+class Rename(Command):
+    '''The rename command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the rename command.'''
+        parser.add_argument(
+            metavar='old-workspace-name',
+            dest='old_ws',
+            action='store',
+            help='Old workspace name')
+        parser.add_argument(
+            metavar='new-workspace-name',
+            dest='new_ws',
+            action='store',
+            help='New workspace name')
 
+    @classmethod
+    def do(cls, ws, args):
+        '''Executes the rename command.'''
+        old_ws_dir = get_ws_dir(args.root, args.old_ws)
+        if not os.path.exists(old_ws_dir):
+            raise WSError('Workspace %s does not exist' % args.old_ws)
 
-def handler(ws, args):
-    '''Executes the rename subcmd.'''
-    old_ws_dir = get_ws_dir(args.root, args.old_ws)
-    if not os.path.exists(old_ws_dir):
-        raise WSError('Workspace %s does not exist' % args.old_ws)
+        d = parse_manifest(args.root)
+        for proj in d:
+            build_dir = get_build_dir(old_ws_dir, proj)
+            if os.path.exists(build_dir):
+                raise WSError('cannot rename a workspace that contains build '
+                              'artifacts, as some builds contain absolute paths '
+                              'and are thus not relocatable. Please force-clean '
+                              'this workspace first and then rename it.')
 
-    d = parse_manifest(args.root)
-    for proj in d:
-        build_dir = get_build_dir(old_ws_dir, proj)
-        if os.path.exists(build_dir):
-            raise WSError('cannot rename a workspace that contains build '
-                          'artifacts, as some builds contain absolute paths '
-                          'and are thus not relocatable. Please force-clean '
-                          'this workspace first and then rename it.')
+        new_ws_dir = get_ws_dir(args.root, args.new_ws)
+        if os.path.exists(new_ws_dir):
+            raise WSError('Workspace %s already exists; please delete it first if '
+                          'you want to do this rename' % args.new_ws)
 
-    new_ws_dir = get_ws_dir(args.root, args.new_ws)
-    if os.path.exists(new_ws_dir):
-        raise WSError('Workspace %s already exists; please delete it first if '
-                      'you want to do this rename' % args.new_ws)
-
-    rename(old_ws_dir, new_ws_dir)
-    default_link = get_default_ws_link(args.root)
-    if os.readlink(default_link) == args.old_ws:
-        remove(default_link)
-        symlink(args.new_ws, default_link)
+        rename(old_ws_dir, new_ws_dir)
+        default_link = get_default_ws_link(args.root)
+        if os.readlink(default_link) == args.old_ws:
+            remove(default_link)
+            symlink(args.new_ws, default_link)

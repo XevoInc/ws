@@ -59,48 +59,39 @@ _TAINT_KEYS = {'type'}
 SUBCMDS = {
     'init': {
         'friendly': 'Initialize workspace with manifest',
-        'args': wst.cmd.init.args,
-        'handler': wst.cmd.init.handler
+        'cmd': wst.cmd.init.Init
     },
     'list': {
         'friendly': 'List the available workspaces',
-        'args': wst.cmd.list.args,
-        'handler': wst.cmd.list.handler
+        'cmd': wst.cmd.list.List
     },
     'rename': {
         'friendly': 'Rename a workspace',
-        'args': wst.cmd.rename.args,
-        'handler': wst.cmd.rename.handler
+        'cmd': wst.cmd.rename.Rename
     },
     'remove': {
         'friendly': 'Remove a workspace',
-        'args': wst.cmd.remove.args,
-        'handler': wst.cmd.remove.handler
+        'cmd': wst.cmd.remove.Remove
     },
     'default': {
         'friendly': 'Set the default workspace',
-        'args': wst.cmd.default.args,
-        'handler': wst.cmd.default.handler
+        'cmd': wst.cmd.default.Default
     },
     'config': {
         'friendly': 'Configure a workspace',
-        'args': wst.cmd.config.args,
-        'handler': wst.cmd.config.handler
+        'cmd': wst.cmd.config.Config
     },
     'clean': {
         'friendly': 'Clean project or workspace',
-        'args': wst.cmd.clean.args,
-        'handler': wst.cmd.clean.handler
+        'cmd': wst.cmd.clean.Clean
     },
     'build': {
         'friendly': 'Build project or workspace',
-        'args': wst.cmd.build.args,
-        'handler': wst.cmd.build.handler
+        'cmd': wst.cmd.build.Build
     },
     'env': {
         'friendly': 'Run command in the workspace environment',
-        'args': wst.cmd.env.args,
-        'handler': wst.cmd.env.handler
+        'cmd': wst.cmd.env.Env
     }
 }
 
@@ -148,7 +139,7 @@ def parse_args():
     subparsers = parser.add_subparsers(help='subcommands')
     for cmd, d in SUBCMDS.items():
         subparser = subparsers.add_parser(cmd, help=d['friendly'])
-        d['args'](subparser)
+        d['cmd'].args(subparser)
         subparser.set_defaults(subcmd=cmd)
 
     args = parser.parse_args()
@@ -214,8 +205,8 @@ def main():
     check_tool('git')
     check_tool('gcc')
 
-    handler = SUBCMDS[args.subcmd]['handler']
-    handler(ws_dir, args)
+    cls = SUBCMDS[args.subcmd]['cmd']
+    cls.do(ws_dir, args)
 
 
 if __name__ == '__main__':

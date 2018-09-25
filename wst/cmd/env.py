@@ -28,6 +28,7 @@ import logging
 import os
 
 from wst import WSError
+from wst.cmd import Command
 from wst.conf import (
     get_build_dir,
     get_build_env,
@@ -36,58 +37,61 @@ from wst.conf import (
 from wst.shell import get_shell
 
 
-def args(parser):
-    '''Populates the argument parser for the env subcmd.'''
-    parser.add_argument(
-        '-c', '--current-dir',
-        action='store',
-        default=None,
-        help='The directory from which the command will be run')
-    parser.add_argument(
-        'project',
-        action='store',
-        help='Enter the build environment for a particular project')
-    parser.add_argument(
-        'command',
-        action='store',
-        nargs=argparse.REMAINDER,
-        help='Command to run inside the given environment')
+class Env(Command):
+    '''The env command.'''
+    @classmethod
+    def args(cls, parser):
+        '''Populates the argument parser for the env command.'''
+        parser.add_argument(
+            '-c', '--current-dir',
+            action='store',
+            default=None,
+            help='The directory from which the command will be run')
+        parser.add_argument(
+            'project',
+            action='store',
+            help='Enter the build environment for a particular project')
+        parser.add_argument(
+            'command',
+            action='store',
+            nargs=argparse.REMAINDER,
+            help='Command to run inside the given environment')
 
+    @classmethod
+    def do(cls, ws, args):
+        '''Executes the env command.'''
+        build_dir = get_build_dir(ws, args.project)
+        if not os.path.isdir(build_dir):
+            raise WSError('build directory for %s doesn\'t exist; have you built '
+                          'it yet?' % args.project)
 
-def handler(ws, args):
-    '''Executes the env subcmd.'''
-    build_dir = get_build_dir(ws, args.project)
-    if not os.path.isdir(build_dir):
-        raise WSError('build directory for %s doesn\'t exist; have you built '
-                      'it yet?' % args.project)
+        d = parse_manifest(args.root)
+        build_env = get_build_env(ws, d, args.project, True)
 
-    d = parse_manifest(args.root)
-    build_env = get_build_env(ws, d, args.project, True)
+        if len(args.command) > 0:
+            cmd = args.command
+        else:
+            cmd = [get_shell()]
 
-    if len(args.command) > 0:
-        cmd = args.command
-    else:
-        cmd = [get_shell()]
+        exe = os.path.basename(cmd[0])
+        if exe in ('bash', 'sh'):
+            suffix = '\\[\033[1;32m\\][ws-%s-env]\\[\033[m\\]$ ' % args.project
+            if exe == 'bash':
+                # Tweak the prompt to make it obvious we're in a special env.
+                cmd.insert(1, '--norc')
+                prompt = '\\u@\h:\w %s' % suffix
+            elif exe == 'sh':
+                # sh doesn't support \u and other codes.
+                prompt = suffix
+            build_env['PS1'] = prompt
 
-    exe = os.path.basename(cmd[0])
-    if exe in ('bash', 'sh'):
-        suffix = '\\[\033[1;32m\\][ws-%s-env]\\[\033[m\\]$ ' % args.project
-        if exe == 'bash':
-            # Tweak the prompt to make it obvious we're in a special env.
-            cmd.insert(1, '--norc')
-            prompt = '\\u@\h:\w %s' % suffix
-        elif exe == 'sh':
-            # sh doesn't support \u and other codes.
-            prompt = suffix
-        build_env['PS1'] = prompt
+        logging.debug('execing with %s build environment: %s'
+                      % (args.project, cmd))
 
-    logging.debug('execing with %s build environment: %s'
-                  % (args.project, cmd))
+        if args.current_dir is None:
+            current_dir = get_build_dir(ws, args.project)
+        else:
+            current_dir = args.current_dir
+        os.chdir(current_dir)
 
-    if args.current_dir is None:
-        current_dir = get_build_dir(ws, args.project)
-    else:
-        current_dir = args.current_dir
-    os.chdir(current_dir)
-
-    os.execvpe(cmd[0], cmd, build_env)
+        os.execvpe(cmd[0], cmd, build_env)
