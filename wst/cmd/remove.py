@@ -69,14 +69,14 @@ class Remove(Command):
         default_link = get_default_ws_link(args.root)
         is_default = (os.readlink(default_link) == args.remove_ws)
         if is_default:
-            # If the deleted workspace is the default, force the user to choose a
-            # new one.
+            # If the deleted workspace is the default, force the user to choose
+            # a new one.
             if args.default is None:
                 raise WSError('trying to remove the default workspace; must '
                               'specify a new default via -d/--default')
         elif args.default:
-            raise WSError('-d/--default is not applicable unless you are removing '
-                          'the default workspace')
+            raise WSError('-d/--default is not applicable unless you are '
+                          'removing the default workspace')
 
         # We are good to go.
         rmtree(ws_dir)

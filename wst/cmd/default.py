@@ -50,7 +50,6 @@ class Default(Command):
             nargs='?',
             help='Workspace to make the default')
 
-
     @classmethod
     def do(cls, _, args):
         '''Executes the default command.'''

@@ -72,14 +72,15 @@ class Rename(Command):
             build_dir = get_build_dir(old_ws_dir, proj)
             if os.path.exists(build_dir):
                 raise WSError('cannot rename a workspace that contains build '
-                              'artifacts, as some builds contain absolute paths '
-                              'and are thus not relocatable. Please force-clean '
-                              'this workspace first and then rename it.')
+                              'artifacts, as some builds contain absolute '
+                              'paths and are thus not relocatable. Please '
+                              'force-clean this workspace first and then '
+                              'rename it.')
 
         new_ws_dir = get_ws_dir(args.root, args.new_ws)
         if os.path.exists(new_ws_dir):
-            raise WSError('workspace %s already exists; please delete it first if '
-                          'you want to do this rename' % args.new_ws)
+            raise WSError('workspace %s already exists; please delete it '
+                          'first if you want to do this rename' % args.new_ws)
 
         rename(old_ws_dir, new_ws_dir)
         default_link = get_default_ws_link(args.root)

@@ -87,8 +87,8 @@ class Init(Command):
             action='store',
             choices=MANIFEST_SOURCES,
             default='repo',
-            help=('If -m is specified, what the path is relative to (see README '
-                  'for details)'))
+            help=('If -m is specified, what the path is relative to (see '
+                  'README for details)'))
 
     @classmethod
     def do(cls, _, args):
@@ -110,7 +110,8 @@ class Init(Command):
         ws_dir = get_ws_dir(root, ws)
 
         if os.path.exists(ws_dir):
-            raise WSError('Cannot initialize already existing workspace %s' % ws)
+            raise WSError('Cannot initialize already existing workspace %s'
+                          % ws)
 
         if args.manifest_source == 'repo':
             parent = os.path.realpath(os.path.join(root, os.pardir))
@@ -122,8 +123,8 @@ class Init(Command):
                                  % args.manifest_source)
         manifest = os.path.join(base, args.manifest)
         if os.path.isdir(manifest):
-            # If -m points to a directory instead of a file, assume there is a file
-            # with the default manifest name inside.
+            # If -m points to a directory instead of a file, assume there is a
+            # file with the default manifest name inside.
             manifest = os.path.join(manifest, get_default_manifest_name())
 
         # Use a relative path for anything inside the parent of .ws and an

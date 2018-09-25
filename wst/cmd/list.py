@@ -33,7 +33,6 @@ from wst.conf import (
 )
 
 
-
 class List(Command):
     '''The list command.'''
     @classmethod

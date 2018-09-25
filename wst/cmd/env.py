@@ -62,8 +62,8 @@ class Env(Command):
         '''Executes the env command.'''
         build_dir = get_build_dir(ws, args.project)
         if not os.path.isdir(build_dir):
-            raise WSError('build directory for %s doesn\'t exist; have you built '
-                          'it yet?' % args.project)
+            raise WSError('build directory for %s doesn\'t exist; have you '
+                          'built it yet?' % args.project)
 
         d = parse_manifest(args.root)
         build_env = get_build_env(ws, d, args.project, True)

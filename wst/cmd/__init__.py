@@ -23,6 +23,7 @@
 # SOFTWARE.
 #
 
+
 class Command(object):
 
     '''A class representing a top-level ws command. Since this is really an

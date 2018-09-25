@@ -151,7 +151,8 @@ class Build(Command):
         '''Executes the build subcmd.'''
         ws_config = get_ws_config(get_ws_dir(args.root, ws))
         if ws_config['taint']:
-            raise WSError('Workspace is tainted from a config change; please do:\n'
+            raise WSError('Workspace is tainted from a config change; please '
+                          'do:\n'
                           'ws clean --force\n'
                           'And then build again')
 
