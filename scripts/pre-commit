@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Pre-commit hook to verify commit correctness.
+#
+
+exec git diff --cached --diff-filter=ACMRTUXB | flake8
