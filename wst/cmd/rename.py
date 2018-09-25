@@ -65,7 +65,7 @@ class Rename(Command):
 
         old_ws_dir = get_ws_dir(args.root, args.old_ws)
         if not os.path.exists(old_ws_dir):
-            raise WSError('Workspace %s does not exist' % args.old_ws)
+            raise WSError('workspace %s does not exist' % args.old_ws)
 
         d = parse_manifest(args.root)
         for proj in d:
@@ -78,7 +78,7 @@ class Rename(Command):
 
         new_ws_dir = get_ws_dir(args.root, args.new_ws)
         if os.path.exists(new_ws_dir):
-            raise WSError('Workspace %s already exists; please delete it first if '
+            raise WSError('workspace %s already exists; please delete it first if '
                           'you want to do this rename' % args.new_ws)
 
         rename(old_ws_dir, new_ws_dir)
