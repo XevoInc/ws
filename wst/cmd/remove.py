@@ -24,7 +24,6 @@
 #
 
 import os
-import shutil
 
 from wst import WSError
 from wst.conf import (
@@ -33,6 +32,7 @@ from wst.conf import (
 )
 from wst.shell import (
     remove,
+    rmtree,
     symlink
 )
 
@@ -75,7 +75,7 @@ def handler(_, args):
                       'the default workspace')
 
     # We are good to go.
-    shutil.rmtree(ws_dir)
+    rmtree(ws_dir)
     if is_default:
         remove(default_link)
         symlink(args.default, default_link)

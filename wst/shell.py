@@ -24,6 +24,7 @@
 #
 
 import os
+import shutil
 import subprocess
 
 
@@ -60,6 +61,13 @@ def remove(path):
     log('removing %s' % path)
     if not dry_run():
         os.unlink(path)
+
+
+def rmtree(path):
+    '''Removes the given file or directory, recursively.'''
+    log('recursively removing %s' % path)
+    if not dry_run():
+        shutil.rmtree(path)
 
 
 def get_shell():

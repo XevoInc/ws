@@ -27,7 +27,6 @@ import errno
 import logging
 import multiprocessing
 import os
-import shutil
 
 from wst import WSError
 from wst.conf import (
@@ -48,6 +47,7 @@ from wst.conf import (
     set_stored_checksum
 )
 from wst.shell import (
+    rmtree,
     symlink,
     mkdir
 )
@@ -126,7 +126,7 @@ def build(root, ws, proj, d, current, ws_config, force):
         if not success:
             # Remove the build directory if we failed so that we are forced to
             # re-run configure next time.
-            shutil.rmtree(build_dir)
+            rmtree(build_dir)
             return False
 
     # Build.

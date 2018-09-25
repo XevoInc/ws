@@ -26,7 +26,6 @@
 import errno
 import logging
 import os
-import shutil
 
 from wst import (
     dry_run,
@@ -43,6 +42,7 @@ from wst.conf import (
     parse_manifest,
     update_config
 )
+from wst.shell import rmtree
 
 
 def args(parser):
@@ -67,7 +67,7 @@ def force_clean(ws, proj):
     if dry_run():
         return
     try:
-        shutil.rmtree(build_dir)
+        rmtree(build_dir)
     except OSError as e:
         if e.errno == errno.ENOENT:
             logging.debug('%s already removed' % build_dir)
