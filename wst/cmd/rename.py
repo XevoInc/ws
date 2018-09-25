@@ -59,6 +59,10 @@ class Rename(Command):
     @classmethod
     def do(cls, ws, args):
         '''Executes the rename command.'''
+        if args.old_ws == 'default':
+            raise WSError('cannot rename the default workspace; please use ws '
+                          'default if you want to change it')
+
         old_ws_dir = get_ws_dir(args.root, args.old_ws)
         if not os.path.exists(old_ws_dir):
             raise WSError('Workspace %s does not exist' % args.old_ws)
