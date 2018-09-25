@@ -3,4 +3,12 @@
 # Pre-commit hook to verify commit correctness.
 #
 
-exec git diff --cached --diff-filter=ACMRTUXB | flake8
+stdout="$(git diff --cached --diff-filter=ACMRTUXB | flake8)"
+ret=$?
+if [ $ret != 0 ]; then
+    echo "flake8 checking failed:"
+    cat << EOF
+$stdout
+EOF
+fi
+exit $ret
