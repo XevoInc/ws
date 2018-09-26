@@ -58,7 +58,7 @@ _TAINT_KEYS = {'type'}
 # do hook, which actually executes the subcmd given parsed arguments.
 SUBCMDS = {
     'init': {
-        'friendly': 'Initialize workspace with manifest',
+        'friendly': 'Create a new workspace',
         'cmd': wst.cmd.init.Init
     },
     'list': {
