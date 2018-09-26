@@ -104,7 +104,7 @@ class Clean(Command):
             '-f', '--force',
             action='store_true',
             default=False,
-            help='Force-clean (remove the build directory')
+            help='Force-clean (remove the build directory)')
 
     @classmethod
     def do(cls, ws, args):
