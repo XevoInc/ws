@@ -62,7 +62,7 @@ SUBCMDS = {
         'cmd': wst.cmd.init.Init
     },
     'list': {
-        'friendly': 'List the available workspaces',
+        'friendly': 'List projects',
         'cmd': wst.cmd.list.List
     },
     'rename': {
