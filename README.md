@@ -1,5 +1,5 @@
 # Workspace tool
-`ws` is a lightweight tool for managing a workspace of code repositories. It is
+`ws` is a lightweight tool for managing a collection of code repositories. It is
 intended to handle coarse dependencies between projects, building multiple
 projects in the right order and passing the correct flags to each (such as
 `PKG_CONFIG_PATH` and similar). It is not intended to be a full-fledged build
@@ -27,7 +27,7 @@ pip "developer mode". This way, code changes immediately take effect without
 re-running the install step.
 
 ## ws
-The `ws` script is the main point of interaction with your workspace. It
+The `ws` script is the main point of interaction with your workspaces. It
 assumes you have already synced a bunch of code using `repo` or some other tool
 and, unless you use special options, it assumes you are currently somewhere
 inside the root of the source that `ws` manages. However, you can be anywhere
