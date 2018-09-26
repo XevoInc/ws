@@ -27,11 +27,11 @@ pip "developer mode". This way, code changes immediately take effect without
 re-running the install step.
 
 ## ws
-The `ws` script is the main point of interaction with your workspace. It assumes
-you have already synced a bunch of code using the `repo` tool and, unless you
-use special options, it assumes you are currently somewhree inside the root of
-the source that `repo` manages. Like `repo` however, you can be anywhere inside
-the root and do not have to be at the very top.
+The `ws` script is the main point of interaction with your workspace. It
+assumes you have already synced a bunch of code using `repo` or some other tool
+and, unless you use special options, it assumes you are currently somewhere
+inside the root of the source that `ws` manages. However, you can be anywhere
+inside that tree and do not have to be at the top of it.
 
 The normal workflow for `ws` is as follows:
 
@@ -62,13 +62,19 @@ And get auto-completion for ws commands.
 
 ### ws init
 When you run `ws init`, ws creates a `.ws` directory in the current working
-directory. This directory can contain multiple workspaces, but there is always a
-default workspace, which is the one that gets used if you don't specify an
-alternate workspace with the `-w` option. You may want to create multiple
-workspaces to manage multiple build configurations, such as separate debug and
-release builds. However, all workspaces in the same `.ws` directory will still
-operate on the same source code (the repositories configured in
+directory. This directory can contain multiple workspaces, but there is always
+a default workspace, which is the one that gets used if you don't specify an
+alternate workspace with the `-w` option. One reason to create multiple
+workspaces is to manage multiple build configurations, such as separate debug
+and release builds. However, all workspaces in the same `.ws` directory will
+still operate on the same source code (the repositories configured in
 `ws-manifest.yaml`).
+
+If you wish to create multiple workspaces, you can use `ws init` with an
+argument to do so. For example, `ws init new` would create a new workspace
+called `new`. However, it would not be used by default until you run `ws
+default new`. That said, you can also use `-w` to operate on it (e.g. `ws -w
+new build`).
 
 If you specify `-m`, you can manually point to a `ws-manifest.yaml` to use. By
 default, this is relative to a repository containing a git-repo manifest (e.g.
