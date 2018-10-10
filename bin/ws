@@ -50,10 +50,13 @@ from wst.version import version
 _LOG_FORMAT = '%(message)s'
 
 
+# Keys that taint a build.
+_TAINT_KEYS = {'type'}
+
 # This dictionary gives the list of available subcmds. Each subcmd must supply
 # a populate hook, which populates its arguments in the argument parser, and a
 # do hook, which actually executes the subcmd given parsed arguments.
-SUBCMDS = {
+_SUBCMDS = {
     'init': {
         'friendly': 'Create a new workspace',
         'cmd': wst.cmd.init.Init
@@ -134,7 +137,7 @@ def parse_args():
         version=version())
 
     subparsers = parser.add_subparsers(help='subcommands')
-    for cmd, d in SUBCMDS.items():
+    for cmd, d in _SUBCMDS.items():
         subparser = subparsers.add_parser(cmd, help=d['friendly'])
         d['cmd'].args(subparser)
         subparser.set_defaults(subcmd=cmd)
@@ -202,7 +205,7 @@ def main():
     check_tool('git')
     check_tool('gcc')
 
-    cls = SUBCMDS[args.subcmd]['cmd']
+    cls = _SUBCMDS[args.subcmd]['cmd']
     cls.do(ws_dir, args)
 
 
