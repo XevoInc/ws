@@ -38,7 +38,7 @@ The normal workflow for `ws` is as follows:
 ```
 repo init -u MANIFEST-REPO-URL
 repo sync
-ws init
+ws init -s repo
 ws build
 ```
 
@@ -50,8 +50,8 @@ manage all the same projects that `repo` manages, but it can. The full format
 for `ws-manifest.yaml` is at the bottom of the README.
 
 If you don't use the `git-repo` tool, you can instead pass in your own ws
-manifest via `ws init -m`. This lets you manage the manifest however you like
-(e.g. submodules, or manually).
+manifest via `ws init -s fs -m`. This lets you manage the manifest however you
+like (e.g. submodules, or manually).
 
 ## bash-completion
 If you like bash-completions and typing things fast, you can do:

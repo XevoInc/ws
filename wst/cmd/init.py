@@ -86,7 +86,7 @@ class Init(Command):
             '-s', '--manifest-source',
             action='store',
             choices=MANIFEST_SOURCES,
-            default='repo',
+            required=True,
             help=('If -m is specified, what the path is relative to (see '
                   'README for details)'))
 
