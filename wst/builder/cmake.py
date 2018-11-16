@@ -24,8 +24,6 @@
 #
 
 
-import multiprocessing
-
 from wst.builder import Builder
 from wst.shell import (
     call_build,
@@ -53,6 +51,7 @@ class CMakeBuilder(Builder):
         '''Calls configure using CMake.'''
         cmd = [
             'cmake',
+            '-GNinja',
             '-DCMAKE_BUILD_TYPE=%s' % build_type,
             '-DCMAKE_INSTALL_PREFIX=%s' % prefix]
         for opt in options:
@@ -64,10 +63,7 @@ class CMakeBuilder(Builder):
     def build(cls, proj, prefix, source_dir, build_dir, env, options):
         '''Calls build using CMake.'''
         return call_build(
-            ('make',
-             '-C', build_dir,
-             '-j', str(multiprocessing.cpu_count()+1),
-             'install'),
+            ('ninja', '-C', build_dir, 'install'),
             env=env)
 
     @classmethod
