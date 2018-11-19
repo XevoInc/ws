@@ -69,4 +69,4 @@ class CMakeBuilder(Builder):
     @classmethod
     def clean(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls clean using CMake.'''
-        return call_clean(('make', '-C', build_dir, 'clean'), env=env)
+        return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)
