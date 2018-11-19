@@ -62,9 +62,7 @@ class CMakeBuilder(Builder):
     @classmethod
     def build(cls, proj, prefix, source_dir, build_dir, env, options):
         '''Calls build using CMake.'''
-        return call_build(
-            ('ninja', '-C', build_dir, 'install'),
-            env=env)
+        return call_build(('ninja', '-C', build_dir, 'install'), env=env)
 
     @classmethod
     def clean(cls, proj, prefix, source_dir, build_dir, env):
