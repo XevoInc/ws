@@ -386,6 +386,13 @@ def get_host_triplet():  # noqa: E302
     return _HOST_TRIPLET
 
 
+def get_bin_paths(ws, proj):
+    '''Gets the path to installed libraries for a project.'''
+    noarch_bin_dir = os.path.join(get_install_dir(ws, proj), 'bin')
+    arch_bin_arch_dir = os.path.join(noarch_bin_dir, get_host_triplet())
+    return [noarch_bin_dir, arch_bin_arch_dir]
+
+
 def get_lib_paths(ws, proj):
     '''Gets the path to installed libraries for a project.'''
     noarch_lib_dir = os.path.join(get_install_dir(ws, proj), 'lib')
@@ -564,17 +571,17 @@ def _merge_build_env(ws, d, proj, env, include_path):
     This is a helper function called by get_build_env for each dependency of a
     given project.'''
     build_dir = get_build_dir(ws, proj)
-    install_dir = get_install_dir(ws, proj)
-    bin_dir = os.path.join(install_dir, 'bin')
+    bin_dirs = get_bin_paths(ws, proj)
 
     pkgconfig_paths = get_pkgconfig_paths(ws, proj)
     lib_paths = get_lib_paths(ws, proj)
     merge_var(env, 'PKG_CONFIG_PATH', pkgconfig_paths)
     merge_var(env, 'LD_LIBRARY_PATH', lib_paths)
     if include_path:
-        merge_var(env, 'PATH', [build_dir, bin_dir])
+        merge_var(env, 'PATH', [build_dir] + bin_dirs)
 
     # Add in any builder-specific environment tweaks.
+    install_dir = get_install_dir(ws, proj)
     get_builder(d, proj).env(proj, install_dir, build_dir, env)
 
     # Add in any project-specific environment variables specified in the
