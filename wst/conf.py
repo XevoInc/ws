@@ -568,9 +568,9 @@ def _merge_build_env(ws, d, proj, env, include_path):
     bin_dir = os.path.join(install_dir, 'bin')
 
     pkgconfig_paths = get_pkgconfig_paths(ws, proj)
-    ld_library_paths = get_lib_paths(ws, proj)
+    lib_paths = get_lib_paths(ws, proj)
     merge_var(env, 'PKG_CONFIG_PATH', pkgconfig_paths)
-    merge_var(env, 'LD_LIBRARY_PATH', ld_library_paths)
+    merge_var(env, 'LD_LIBRARY_PATH', lib_paths)
     if include_path:
         merge_var(env, 'PATH', [build_dir, bin_dir])
 
@@ -579,8 +579,6 @@ def _merge_build_env(ws, d, proj, env, include_path):
 
     # Add in any project-specific environment variables specified in the
     # manifest.
-    lib_paths = get_lib_paths(ws, proj)
-    install_dir = get_install_dir(ws, proj)
     for var, val in d[proj]['env'].items():
         val = expand_var(val, 'LIBDIR', lib_paths)
         val = expand_var(val, 'PREFIX', [install_dir])
