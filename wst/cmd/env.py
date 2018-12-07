@@ -88,10 +88,7 @@ class Env(Command):
         logging.debug('execing with %s build environment: %s'
                       % (args.project, cmd))
 
-        if args.current_dir is None:
-            current_dir = get_build_dir(ws, args.project)
-        else:
-            current_dir = args.current_dir
-        os.chdir(current_dir)
+        if args.current_dir is not None:
+            os.chdir(args.current_dir)
 
         os.execvpe(cmd[0], cmd, build_env)
