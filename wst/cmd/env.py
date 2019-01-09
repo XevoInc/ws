@@ -85,6 +85,10 @@ class Env(Command):
                 prompt = suffix
             build_env['PS1'] = prompt
 
+        # Set an env var so the user can easily cd $WSBUILD and run tests or
+        # similar inside the build directory.
+        build_env['WSBUILD'] = build_dir
+
         logging.debug('execing with %s build environment: %s'
                       % (args.project, cmd))
 
