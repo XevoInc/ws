@@ -41,12 +41,20 @@ class Env(Command):
     '''The env command.'''
     @classmethod
     def args(cls, parser):
+        group = parser.add_mutually_exclusive_group()
         '''Populates the argument parser for the env command.'''
-        parser.add_argument(
+        group.add_argument(
+            '-b', '--build-dir',
+            action='store_true',
+            default=False,
+            help='Enter the env from the build directory instead of the '
+                 'current directory')
+        group.add_argument(
             '-c', '--current-dir',
             action='store',
             default=None,
             help='The directory from which the command will be run')
+
         parser.add_argument(
             'project',
             action='store',
@@ -91,6 +99,9 @@ class Env(Command):
 
         logging.debug('execing with %s build environment: %s'
                       % (args.project, cmd))
+
+        if args.build_dir:
+            args.current_dir = build_dir
 
         if args.current_dir is not None:
             os.chdir(args.current_dir)
