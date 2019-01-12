@@ -83,7 +83,8 @@ class Env(Command):
 
         exe = os.path.basename(cmd[0])
         if exe in ('bash', 'sh'):
-            suffix = '\\[\033[1;32m\\][ws-%s-env]\\[\033[m\\]$ ' % args.project
+            suffix = ('\\[\033[1;32m\\][ws-%s-env]\\[\033[m\\]\\$ '
+                      % args.project)
             if exe == 'bash':
                 # Tweak the prompt to make it obvious we're in a special env.
                 cmd.insert(1, '--norc')
