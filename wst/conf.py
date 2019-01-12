@@ -256,10 +256,10 @@ def dependency_closure(d, projects):
     return tuple(order)
 
 
-def find_root():
+def find_root(start_dir):
     '''Recursively looks up in the directory hierarchy for a directory named
     .ws, and returns the first one found, or None if one was not found.'''
-    path = os.path.realpath(os.getcwd())
+    path = os.path.realpath(start_dir)
     while path != '/':
         ws = os.path.join(path, '.ws')
         if os.path.isdir(ws):

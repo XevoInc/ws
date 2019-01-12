@@ -102,11 +102,13 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Manage workspaces')
     parser.set_defaults(subcmd=None)
     parser.add_argument(
-        '-r', '--root',
+        '-c', '--current-dir',
         action='store',
         required=False,
-        help=('Root workspace directory (.ws) to act on. If not specified, '
-              'will recursively try parent .ws directories.'))
+        dest='start_dir',
+        default=os.getcwd(),
+        help=('Run ws as if from the given directory. Defaults to the current '
+              'working directory.'))
     parser.add_argument(
         '-w', '--workspace',
         action='store',
@@ -144,12 +146,11 @@ def parse_args():
 
     args = parser.parse_args()
 
+    args.root = find_root(args.start_dir)
     if args.root is None:
-        args.root = find_root()
-        if args.root is None:
-            if args.subcmd != 'init':
-                raise WSError("can't find .ws directory; please run %s init"
-                              % sys.argv[0])
+        if args.subcmd != 'init':
+            raise WSError("can't find .ws directory; please run %s init"
+                          % sys.argv[0])
 
     if args.subcmd not in ('init', 'default', 'list', 'rename', 'remove'):
         if args.ws is None:
