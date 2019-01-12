@@ -26,7 +26,7 @@
 #
 
 
-_VERSION = '0.2.7'
+_VERSION = '0.2.8'
 
 
 def version():
