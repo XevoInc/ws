@@ -87,7 +87,7 @@ class Env(Command):
             if exe == 'bash':
                 # Tweak the prompt to make it obvious we're in a special env.
                 cmd.insert(1, '--norc')
-                prompt = '\\u@\h:\w %s' % suffix
+                prompt = '\\u@\\h:\\w %s' % suffix
             elif exe == 'sh':
                 # sh doesn't support \u and other codes.
                 prompt = suffix

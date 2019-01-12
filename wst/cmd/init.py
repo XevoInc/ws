@@ -119,8 +119,9 @@ class Init(Command):
         elif args.manifest_source == 'fs':
             base = '.'
         else:
-            raise NotImplemented('Manifest source %s should be implemented'
-                                 % args.manifest_source)
+            raise NotImplementedError('Manifest source %s should be '
+                                      'implemented'
+                                      % args.manifest_source)
         manifest = os.path.join(base, args.manifest)
         if os.path.isdir(manifest):
             # If -m points to a directory instead of a file, assume there is a
