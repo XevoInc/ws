@@ -83,15 +83,15 @@ class Env(Command):
 
         exe = os.path.basename(cmd[0])
         if exe in ('bash', 'sh'):
-            suffix = ('\\[\033[1;32m\\][ws:%s env]\\[\033[m\\]\\$ '
+            prefix = ('\\[\033[1;32m\\][ws:%s env]\\[\033[m\\]'
                       % args.project)
             if exe == 'bash':
                 # Tweak the prompt to make it obvious we're in a special env.
                 cmd.insert(1, '--norc')
-                prompt = '\\u@\\h:\\w %s' % suffix
+                prompt = '%s \\u@\\h:\\w\\$ ' % prefix
             elif exe == 'sh':
                 # sh doesn't support \u and other codes.
-                prompt = suffix
+                prompt = prefix
             build_env['PS1'] = prompt
 
         # Set an env var so the user can easily cd $WSBUILD and run tests or
