@@ -396,8 +396,8 @@ def get_bin_paths(ws, proj):
 def get_lib_paths(ws, proj):
     '''Gets the path to installed libraries for a project.'''
     noarch_lib_dir = os.path.join(get_install_dir(ws, proj), 'lib')
-    arch_lib_arch_dir = os.path.join(noarch_lib_dir, get_host_triplet())
-    return [noarch_lib_dir, arch_lib_arch_dir]
+    arch_lib_dir = os.path.join(noarch_lib_dir, get_host_triplet())
+    return [noarch_lib_dir, arch_lib_dir]
 
 
 def get_pkgconfig_paths(ws, proj):
