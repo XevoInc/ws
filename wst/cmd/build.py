@@ -56,6 +56,17 @@ from wst.shell import (
 
 def _build(root, ws, proj, d, current, ws_config, force):
     '''Builds a given project.'''
+    if not ws_config['projects'][proj]['enable']:
+        logging.warning('not building manually disabled project %s' %
+                        proj)
+        return True
+
+    if ws_config['projects'][proj]['taint']:
+        raise WSError('%s is tainted from a config change; please '
+                      'do:\n'
+                      'ws clean --force %s\n'
+                      'ws build %s' % (proj, proj, proj))
+
     source_dir = get_source_dir(root, d, proj)
     if not force:
         stored = get_stored_checksum(ws, proj)
@@ -64,14 +75,6 @@ def _build(root, ws, proj, d, current, ws_config, force):
             return True
     else:
         logging.debug('forcing a build of %s' % proj)
-
-    if not ws_config['projects'][proj]['enable']:
-        logging.warning('not building manually disabled project %s' %
-                        proj)
-        # Store a checksum so we don't display this warning again until we
-        # change the sources.
-        set_stored_checksum(ws, proj, current)
-        return True
 
     # Make the project directory if needed.
     proj_dir = get_proj_dir(ws, proj)
@@ -109,6 +112,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
     # Configure.
     builder = get_builder(d, proj)
     prefix = get_install_dir(ws, proj)
+    extra_args = d[proj]['options'] + ws_config['projects'][proj]['args']
     if needs_configure:
         success = builder.conf(
             proj,
@@ -117,7 +121,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
             build_dir,
             build_env,
             ws_config['type'],
-            d[proj]['options'])
+            extra_args)
         if not success:
             # Remove the build directory if we failed so that we are forced to
             # re-run configure next time.
@@ -162,7 +166,7 @@ class Build(Command):
             raise WSError('Workspace is tainted from a config change; please '
                           'do:\n'
                           'ws clean --force\n'
-                          'And then build again')
+                          'ws build')
 
         d = parse_manifest(args.root)
 

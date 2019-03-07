@@ -52,8 +52,7 @@ class MesonBuilder(Builder):
             'meson',
             '--buildtype', build_type,
             '--prefix', prefix]
-        for opt in options:
-            cmd.extend(opt)
+        cmd.extend(options)
         cmd.append(build_dir)
         cmd.append(source_dir)
         return call_configure(cmd, env=env)

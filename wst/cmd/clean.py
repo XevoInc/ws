@@ -40,8 +40,7 @@ from wst.conf import (
     get_source_dir,
     get_ws_config,
     invalidate_checksum,
-    parse_manifest,
-    update_config
+    parse_manifest
 )
 from wst.shell import rmtree
 
@@ -63,7 +62,7 @@ def _force_clean(ws, proj):
 
     config = get_ws_config(ws)
     config['taint'] = False
-    update_config(ws, config)
+    config['projects'][proj]['taint'] = False
 
 
 def _polite_clean(root, ws, proj, d):

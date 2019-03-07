@@ -43,7 +43,8 @@ import wst.cmd.rename
 from wst.conf import (
     find_root,
     get_default_ws_link,
-    get_ws_dir
+    get_ws_dir,
+    sync_config
 )
 from wst.version import version
 
@@ -208,6 +209,10 @@ def main():
 
     cls = _SUBCMDS[args.subcmd]['cmd']
     cls.do(ws_dir, args)
+
+    # Init writes out the config, so we don't need to sync it.
+    if args.subcmd != 'init':
+        sync_config(ws_dir)
 
 
 if __name__ == '__main__':

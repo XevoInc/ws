@@ -24,6 +24,7 @@
 #
 
 import collections
+import copy
 import errno
 import hashlib
 import logging
@@ -125,7 +126,7 @@ def parse_yaml(root, manifest):  # noqa: E302
         try:
             options = props['options']
         except KeyError:
-            props['options'] = ()
+            props['options'] = []
         else:
             if not isinstance(props['options'], list):
                 raise WSError('options key in project %s must be a list' %
@@ -134,7 +135,9 @@ def parse_yaml(root, manifest):  # noqa: E302
                 if not isinstance(opt, str):
                     raise WSError('option %s in project %s must be a string' %
                                   (opt, proj))
-            options = tuple(opt.split() for opt in props['options'])
+            options = []
+            for opt in props['options']:
+                options.extend(opt.split())
             props['options'] = options
         props['path'] = os.path.join(parent, proj)
 
@@ -282,6 +285,7 @@ def get_ws_config_path(ws):
     return os.path.join(ws, 'config.yaml')
 
 
+_ORIG_WS_CONFIG = None
 _WS_CONFIG = None
 def get_ws_config(ws):  # noqa: E302
     '''Parses the current workspace config, returning a dictionary of the
@@ -291,17 +295,30 @@ def get_ws_config(ws):  # noqa: E302
         config_path = get_ws_config_path(ws)
         with open(config_path, 'r') as f:
             _WS_CONFIG = yaml.load(f)
+            global _ORIG_WS_CONFIG
+            # Save a copy of the config so we know later whether or not to
+            # write it out when someone asks to sync the config.
+            _ORIG_WS_CONFIG = copy.deepcopy(_WS_CONFIG)
+
+    # Split all project arguments by spaces so that options like '-D something'
+    # turn into ['-D', 'something'], which is what exec requires. We do this
+    # at parse time rather than in the "config" command to allow the user to
+    # hand-edit in a natural way and have the config still work properly. The
+    # next time the config is saved, it will be split by spaces.
+    for proj, proj_map in _WS_CONFIG['projects'].items():
+        parsed_args = []
+        args = proj_map['args']
+        for arg in args:
+            parsed_args.extend(arg.split())
+        proj_map['args'] = parsed_args
+
     return _WS_CONFIG
 
 
-def update_config(ws, config):
+def write_config(ws, config):
     '''Atomically updates the current ws config using the standard trick of
-    writing to a tmp file in the same filesystem, syncing that file, and
-    renaming it to replace the current contents.'''
-    log('updating config at %s' % ws)
-    if dry_run():
-        return
-
+       writing to a tmp file in the same filesystem, syncing that file, and
+       renaming it to replace the current contents.'''
     config_path = get_ws_config_path(ws)
     tmpfile = '%s.tmp' % config_path
     with open(tmpfile, 'w') as f:
@@ -310,10 +327,22 @@ def update_config(ws, config):
         os.fdatasync(f)
     os.rename(tmpfile, config_path)
 
-    # Update the in-memory version of config, just in case someone reads this
-    # again after updating.
     global _WS_CONFIG
     _WS_CONFIG = config
+
+
+def sync_config(ws):
+    '''Writes out the config if and only if it changed since we first read
+       it.'''
+    if _WS_CONFIG == _ORIG_WS_CONFIG:
+        log('ws config did not change, so not updating')
+        return
+    log('updating config at %s' % ws)
+
+    if dry_run():
+        return
+
+    write_config(ws, _WS_CONFIG)
 
 
 def get_default_ws_name():

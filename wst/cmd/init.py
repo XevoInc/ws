@@ -39,7 +39,7 @@ from wst.conf import (
     get_toplevel_build_dir,
     get_ws_dir,
     parse_manifest_file,
-    update_config
+    write_config
 )
 from wst.shell import (
     mkdir,
@@ -174,7 +174,9 @@ class Init(Command):
 
             proj_map = dict((proj, {}) for proj in d)
             for proj in proj_map:
+                proj_map[proj]['taint'] = False
                 proj_map[proj]['enable'] = True
+                proj_map[proj]['args'] = []
 
             config = {
                 'type': args.type,
@@ -182,7 +184,7 @@ class Init(Command):
                 'projects': proj_map
             }
 
-            update_config(ws_dir, config)
+            write_config(ws_dir, config)
 
         if new_root:
             # This is a brand new root .ws directory, so populate the initial
