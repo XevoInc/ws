@@ -285,12 +285,16 @@ def get_ws_config_path(ws):
     return os.path.join(ws, 'config.yaml')
 
 
-def get_ws_config(ws):
+_WS_CONFIG = None
+def get_ws_config(ws):  # noqa: E302
     '''Parses the current workspace config, returning a dictionary of the
     state.'''
-    config = get_ws_config_path(ws)
-    with open(config, 'r') as f:
-        return yaml.load(f)
+    global _WS_CONFIG
+    if _WS_CONFIG is None:
+        config_path = get_ws_config_path(ws)
+        with open(config_path, 'r') as f:
+            _WS_CONFIG = yaml.load(f)
+    return _WS_CONFIG
 
 
 def update_config(ws, config):
@@ -308,6 +312,11 @@ def update_config(ws, config):
         f.flush()
         os.fdatasync(f)
     os.rename(tmpfile, config_path)
+
+    # Update the in-memory version of config, just in case someone reads this
+    # again after updating.
+    global _WS_CONFIG
+    _WS_CONFIG = config
 
 
 def get_default_ws_name():
