@@ -144,7 +144,7 @@ class Init(Command):
             abs_manifest = manifest
         else:
             abs_manifest = os.path.abspath(os.path.join(root, manifest))
-        parse_manifest_file(root, abs_manifest)
+        d = parse_manifest_file(root, abs_manifest)
 
         try:
             mkdir(root)
@@ -167,10 +167,17 @@ class Init(Command):
             # directories.
             mkdir(get_toplevel_build_dir(ws_dir))
             mkdir(get_checksum_dir(ws_dir))
+
+            proj_map = dict((proj, {}) for proj in d)
+            for proj in proj_map:
+                proj_map[proj]['enable'] = True
+
             config = {
                 'type': args.type,
-                'taint': False
+                'taint': False,
+                'projects': proj_map
             }
+
             update_config(ws_dir, config)
 
         if new_root:

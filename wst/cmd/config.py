@@ -29,10 +29,32 @@ import yaml
 from wst import WSError
 from wst.cmd import Command
 from wst.conf import (
+    BUILD_TYPES,
     get_ws_config,
-    update_config,
-    VALID_CONFIG
+    parse_manifest,
+    update_config
 )
+
+
+def parse_bool_val(val):
+    '''Parses a value meant to be interpreted as a bool. Accepts 0, 1, false,
+       and true (with any casing). Raises an exception if none match.'''
+    if val is None:
+        return True
+
+    if val == '0':
+        return False
+
+    if val == '1':
+        return True
+
+    val = val.lower()
+    if val == 'false':
+        return False
+    elif val == 'true':
+        return True
+
+    raise WSError('value "%s" is not a valid boolean' % val)
 
 
 class Config(Command):
@@ -45,6 +67,11 @@ class Config(Command):
             action='store_true',
             default=False,
             help='List the current workspace config')
+        parser.add_argument(
+            '-p', '--project',
+            action='store',
+            default=None,
+            help='Set project-specific config')
         parser.add_argument(
             'options',
             action='store',
@@ -62,17 +89,48 @@ class Config(Command):
         old_config = copy.deepcopy(config)
         for arg in args.options:
             split = arg.split('=')
-            if len(split) != 2:
-                raise WSError('option argument %s invalid. format is key=value'
-                              % arg)
-            key, val = split
-            if key not in VALID_CONFIG:
-                raise WSError('unknown key %s' % key)
-            if val not in VALID_CONFIG[key]:
-                raise WSError('unknown value %s' % val)
-            if key == 'type' and config[key] != val:
-                config['taint'] = True
-            config[key] = val
+            split_len = len(split)
+            if split_len == 1:
+                key = split[0]
+                val = None
+            elif split_len == 2:
+                key = split[0]
+                val = split[1]
+            else:
+                raise WSError('option argument %s invalid. format is val or '
+                              'key=value' % arg)
+
+            project = args.project
+            if project is not None:
+                # Project-specific option.
+                d = parse_manifest(args.root)
+                if project not in d:
+                    raise WSError('project "%s" not found' % project)
+
+                if key == 'enable':
+                    val = parse_bool_val(val)
+                else:
+                    raise WSError('project key "%s" not found' % key)
+
+                try:
+                    proj_config = config['projects'][project]
+                except KeyError:
+                    proj_config = {}
+                    config['projects'][project] = proj_config
+
+                proj_config[key] = val
+
+            else:
+                # Global option.
+                if key == 'type':
+                    if val not in BUILD_TYPES:
+                        raise WSError('"type" key must be one of %s'
+                                      % BUILD_TYPES)
+                    current_key = config.get(key, None)
+                    if current_key != val:
+                        config['taint'] = True
+
+                config[key] = val
 
         if config != old_config:
             update_config(ws, config)

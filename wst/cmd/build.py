@@ -65,6 +65,14 @@ def _build(root, ws, proj, d, current, ws_config, force):
     else:
         logging.debug('forcing a build of %s' % proj)
 
+    if not ws_config['projects'][proj]['enable']:
+        logging.warning('not building manually disabled project %s' %
+                        proj)
+        # Store a checksum so we don't display this warning again until we
+        # change the sources.
+        set_stored_checksum(ws, proj, current)
+        return True
+
     # Make the project directory if needed.
     proj_dir = get_proj_dir(ws, proj)
     try:
@@ -179,7 +187,7 @@ class Build(Command):
         checksums = pool.map(calculate_checksum, src_dirs)
 
         for i, proj in enumerate(order):
-            logging.info('Building %s' % proj)
+            logging.info('building %s' % proj)
             checksum = checksums[i]
             success = _build(
                 args.root,
