@@ -23,6 +23,7 @@
 # SOFTWARE.
 #
 
+import copy
 import yaml
 
 from wst import WSError
@@ -58,6 +59,7 @@ class Config(Command):
             print(yaml.dump(config, default_flow_style=False), end='')
             return
 
+        old_config = copy.deepcopy(config)
         for arg in args.options:
             split = arg.split('=')
             if len(split) != 2:
@@ -72,4 +74,5 @@ class Config(Command):
                 config['taint'] = True
             config[key] = val
 
-        update_config(ws, config)
+        if config != old_config:
+            update_config(ws, config)
