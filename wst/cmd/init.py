@@ -107,6 +107,10 @@ class Init(Command):
                     raise WSError('%s is a reserved name; please choose a '
                                   'different name' % name)
             ws = args.init_ws
+            if '.' in ws or '/' in ws:
+                raise WSError('Workspace name "%s" contains an illegal '
+                              'character (. or /). Please use a different '
+                              'name.' % ws)
         ws_dir = get_ws_dir(root, ws)
 
         if os.path.exists(ws_dir):
