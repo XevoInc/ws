@@ -24,10 +24,12 @@
 #
 
 import argparse
-import logging
 import os
 
-from wst import WSError
+from wst import (
+    WSError,
+    log
+)
 from wst.cmd import Command
 from wst.conf import (
     get_build_dir,
@@ -93,8 +95,7 @@ class Env(Command):
         # similar inside the build directory.
         build_env['WSBUILD'] = build_dir
 
-        logging.debug('execing with %s build environment: %s'
-                      % (args.project, cmd))
+        log('execing with %s build environment: %s' % (args.project, cmd))
 
         if args.build_dir:
             args.current_dir = build_dir

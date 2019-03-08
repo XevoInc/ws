@@ -45,11 +45,11 @@ def set_dry_run():
     _DRY_RUN = True
 
 
-def log(msg):
+def log(msg, level=logging.DEBUG):
     '''Logs a message.'''
-    logging.debug(msg)
+    logging.log(level, msg)
 
 
-def log_cmd(cmd):
+def log_cmd(cmd, level=logging.DEBUG):
     '''Logs a given command being run.'''
-    log(' '.join(cmd))
+    log(' '.join(cmd), level=level)

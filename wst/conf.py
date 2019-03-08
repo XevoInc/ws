@@ -27,7 +27,6 @@ import collections
 import copy
 import errno
 import hashlib
-import logging
 import os
 import yaml
 
@@ -462,7 +461,7 @@ def set_stored_checksum(ws, proj, checksum):
 def invalidate_checksum(ws, proj):
     '''Invalidates the current project checksum. This can be used to force a
     project to rebuild, for example if one of its dependencies rebuilds.'''
-    logging.debug('invalidating checksum for %s' % proj)
+    log('invalidating checksum for %s' % proj)
     if dry_run():
         return
 

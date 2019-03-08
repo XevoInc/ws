@@ -28,7 +28,10 @@ import logging
 import multiprocessing
 import os
 
-from wst import WSError
+from wst import (
+    WSError,
+    log
+)
 from wst.cmd import Command
 from wst.conf import (
     calculate_checksum,
@@ -57,8 +60,8 @@ from wst.shell import (
 def _build(root, ws, proj, d, current, ws_config, force):
     '''Builds a given project.'''
     if not ws_config['projects'][proj]['enable']:
-        logging.warning('not building manually disabled project %s' %
-                        proj)
+        log('not building manually disabled project %s'
+            % (proj, logging.WARNING))
         return True
 
     if ws_config['projects'][proj]['taint']:
@@ -71,10 +74,10 @@ def _build(root, ws, proj, d, current, ws_config, force):
     if not force:
         stored = get_stored_checksum(ws, proj)
         if current == stored:
-            logging.debug('checksum for %s is current; skipping' % proj)
+            log('checksum for %s is current; skipping' % proj)
             return True
     else:
-        logging.debug('forcing a build of %s' % proj)
+        log('forcing a build of %s' % proj)
 
     # Make the project directory if needed.
     proj_dir = get_proj_dir(ws, proj)

@@ -29,7 +29,10 @@ import os
 import shutil
 import sys
 
-from wst import WSError
+from wst import (
+    WSError,
+    log
+)
 import wst.cmd
 import wst.cmd.build
 import wst.cmd.clean
@@ -219,6 +222,6 @@ if __name__ == '__main__':
     try:
         status = main()
     except WSError as e:
-        logging.error(e)
+        log(e, logging.ERROR)
         status = 1
     sys.exit(status)

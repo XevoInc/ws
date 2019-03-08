@@ -24,11 +24,11 @@
 #
 
 import errno
-import logging
 import os
 
 from wst import (
     dry_run,
+    log,
     WSError
 )
 from wst.cmd import Command
@@ -49,14 +49,14 @@ def _force_clean(ws, proj):
     '''Performs a force-clean of a project, removing all files instead of
     politely calling the clean function of the underlying build system.'''
     build_dir = get_build_dir(ws, proj)
-    logging.debug('removing %s' % build_dir)
+    log('removing %s' % build_dir)
     if dry_run():
         return
     try:
         rmtree(build_dir)
     except OSError as e:
         if e.errno == errno.ENOENT:
-            logging.debug('%s already removed' % build_dir)
+            log('%s already removed' % build_dir)
         else:
             raise
 

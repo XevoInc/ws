@@ -23,10 +23,12 @@
 # SOFTWARE.
 #
 
-import logging
 import yaml
 
-from wst import WSError
+from wst import (
+    WSError,
+    log
+)
 from wst.cmd import Command
 from wst.conf import (
     BUILD_TYPES,
@@ -142,7 +144,7 @@ class Config(Command):
                     config['projects'][project] = proj_config
 
                 if can_taint and proj_config[key] != val:
-                    logging.debug('tainting project %s' % project)
+                    log('tainting project %s' % project)
                     proj_config['taint'] = True
 
                 proj_config[key] = val
