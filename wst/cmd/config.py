@@ -68,6 +68,9 @@ def parse_build_args(val):
        arguments. \\, will escape a comma, so you can put a comma in a build
        argument.'''
 
+    if val is None or val == '':
+        return None
+
     split = []
     last_split = 0
     for i, c in enumerate(val):
@@ -133,6 +136,9 @@ class Config(Command):
                     can_taint = True
                 elif key == 'args':
                     val = parse_build_args(val)
+                    if val is None:
+                        raise WSError('build args are not in the right format '
+                                      '("args=key=val")')
                     can_taint = True
                 else:
                     raise WSError('project key "%s" not found' % key)
