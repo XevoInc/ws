@@ -61,7 +61,6 @@ def _force_clean(ws, proj):
             raise
 
     config = get_ws_config(ws)
-    config['taint'] = False
     config['projects'][proj]['taint'] = False
 
 
