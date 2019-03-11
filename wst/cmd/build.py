@@ -67,7 +67,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
 
     if ws_config['projects'][proj]['taint']:
         log('force-cleaning tainted project %s' % proj, logging.WARNING)
-        clean(root, ws, proj, True, d)
+        clean(root, ws, proj, d, True)
 
     source_dir = get_source_dir(root, d, proj)
     if not force:
