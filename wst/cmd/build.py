@@ -60,8 +60,8 @@ from wst.shell import (
 def _build(root, ws, proj, d, current, ws_config, force):
     '''Builds a given project.'''
     if not ws_config['projects'][proj]['enable']:
-        log('not building manually disabled project %s'
-            % (proj, logging.WARNING))
+        log('not building manually disabled project %s' % proj,
+            logging.WARNING)
         return True
 
     if ws_config['projects'][proj]['taint']:
