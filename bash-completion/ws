@@ -94,7 +94,7 @@ _complete_ws() {
 
         env)
             if [[ $posargs == 2 ]]; then
-                # "ws env <TAB>"
+                # ws env <TAB>
                 _ws_list_projects
             else
                 # Completions inside a project's environment.
@@ -112,6 +112,34 @@ _complete_ws() {
                     local switch=f
                 fi
                 COMPREPLY=($(ws env $project bash -c "compgen -${switch} $current" 2>/dev/null))
+            fi
+            ;;
+
+        config)
+            if [[ $last == -p || $last == --project ]]; then
+                # ws config -p <TAB>
+                _ws_list_projects
+            else
+                # ws config <TAB>
+                local i=1
+                local project_arg=0
+                while (( $i < $COMP_CWORD )); do
+                    local word=${COMP_WORDS[i]}
+                    if [[ $word == -p || $word == --project ]]; then
+                        project_arg=1
+                        break
+                    fi
+                    let i=i+1
+                done
+
+                local options
+                if [[ $project_arg == 1 ]]; then
+                    options="enable args="
+                else
+                    options="-p type"
+                fi
+
+                COMPREPLY=($(compgen -W "$options" -- $current))
             fi
             ;;
     esac
