@@ -158,7 +158,7 @@ class Config(Command):
             else:
                 # Global option.
                 if key == 'type':
-                    if val not in BUILD_TYPES:
+                    if val is None or val not in BUILD_TYPES:
                         raise WSError('"type" key must be one of %s'
                                       % BUILD_TYPES)
                     if config[key] != val:

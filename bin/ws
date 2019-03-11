@@ -211,11 +211,14 @@ def main():
     check_tool('gcc')
 
     cls = _SUBCMDS[args.subcmd]['cmd']
-    cls.do(ws_dir, args)
-
-    # Init writes out the config, so we don't need to sync it.
-    if args.subcmd != 'init':
-        sync_config(ws_dir)
+    try:
+        cls.do(ws_dir, args)
+    except:
+        raise
+    finally:
+        # Init writes out the config, so we don't need to sync it.
+        if args.subcmd != 'init':
+            sync_config(ws_dir)
 
 
 if __name__ == '__main__':

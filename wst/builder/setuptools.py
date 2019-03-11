@@ -26,7 +26,10 @@
 import os
 import sys
 from wst.builder import Builder
-from wst.shell import call_build
+from wst.shell import (
+    call_build,
+    rmtree
+)
 
 
 class SetuptoolsBuilder(Builder):
@@ -78,11 +81,6 @@ class SetuptoolsBuilder(Builder):
     @classmethod
     def clean(cls, proj, prefix, source_dir, build_dir, env):
         '''Calls clean using setuptools.'''
-        env['PYTHONUSERBASE'] = prefix
-        call_build(
-            ('pip3',
-             'uninstall',
-             '--yes',
-             '.'),
-            cwd=source_dir,
-            env=env)
+        # setuptools appears not to have a nicer way to do a "make clean" on a
+        # dev-installed package.
+        rmtree(build_dir)
