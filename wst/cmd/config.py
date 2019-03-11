@@ -162,6 +162,7 @@ class Config(Command):
                         raise WSError('"type" key must be one of %s'
                                       % BUILD_TYPES)
                     if config[key] != val:
-                        config['taint'] = True
+                        for proj_config in config['projects'].values():
+                            proj_config['taint'] = True
 
                 config[key] = val

@@ -33,6 +33,7 @@ from wst import (
     log
 )
 from wst.cmd import Command
+from wst.cmd.clean import clean
 from wst.conf import (
     calculate_checksum,
     dependency_closure,
@@ -65,10 +66,8 @@ def _build(root, ws, proj, d, current, ws_config, force):
         return True
 
     if ws_config['projects'][proj]['taint']:
-        raise WSError('%s is tainted from a config change; please '
-                      'do:\n'
-                      'ws clean --force %s\n'
-                      'ws build %s' % (proj, proj, proj))
+        log('force-cleaning tainted project %s' % proj, logging.WARNING)
+        clean(root, ws, proj, True, d)
 
     source_dir = get_source_dir(root, d, proj)
     if not force:
@@ -165,12 +164,6 @@ class Build(Command):
     def do(cls, ws, args):
         '''Executes the build subcmd.'''
         ws_config = get_ws_config(get_ws_dir(args.root, ws))
-        if ws_config['taint']:
-            raise WSError('Workspace is tainted from a config change; please '
-                          'do:\n'
-                          'ws clean --force\n'
-                          'ws build')
-
         d = parse_manifest(args.root)
 
         # Validate.

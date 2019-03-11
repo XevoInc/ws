@@ -79,7 +79,7 @@ def _polite_clean(root, ws, proj, d):
     builder.clean(proj, prefix, source_dir, build_dir, build_env)
 
 
-def _clean(root, ws, proj, force, d):
+def clean(root, ws, proj, force, d):
     '''Cleans a project, forcefully or not.'''
     invalidate_checksum(ws, proj)
 
@@ -120,4 +120,4 @@ class Clean(Command):
             projects = args.projects
 
         for project in projects:
-            _clean(args.root, ws, project, args.force, d)
+            clean(args.root, ws, project, args.force, d)

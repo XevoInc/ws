@@ -180,7 +180,6 @@ class Init(Command):
 
             config = {
                 'type': args.type,
-                'taint': False,
                 'projects': proj_map
             }
 
