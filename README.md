@@ -112,6 +112,22 @@ seems wrong.
 An example use of `ws env` is to manually build something or to tweak the build
 configuration of a given project in a way that `ws` doesn't know how to handle.
 
+### ws config
+`ws config` sets either workspace-wide or per-project configuration settings.
+The following settings are supported:
+
+Workspace-wide settings
+- `type`: `debug` or `release`. This specifies the workspace build type.
+
+Per-project settings
+- `enable`: sets whether or not to build the given project. Typically you want to
+  build everything, but you might satisfy a particular dependency from the
+  distro, or manually build and install it outside of the workspace.
+- `args`: sets build arguments for a particular project, which get directly passed
+  to the builder (e.g. `cmake` or `meson`). An exampe would be passing `-D
+  KEY=VAL` to set a preprocessor variable.
+
+
 ## ws manifest
 The `ws` manifest is a YAML file specifying a few things about the projects `ws`
 manages:
