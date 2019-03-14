@@ -57,7 +57,7 @@ def parse_yaml(root, manifest):  # noqa: E302
     something went wrong.'''
     try:
         with open(manifest, 'r') as f:
-            d = yaml.load(f)
+            d = yaml.load(f, Loader=yaml.CBaseLoader)
     except IOError:
         raise WSError('ws manifest %s not found' % manifest)
 
