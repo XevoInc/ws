@@ -57,7 +57,7 @@ def parse_yaml(root, manifest):  # noqa: E302
     something went wrong.'''
     try:
         with open(manifest, 'r') as f:
-            d = yaml.load(f, Loader=yaml.CBaseLoader)
+            d = yaml.safe_load(f)
     except IOError:
         raise WSError('ws manifest %s not found' % manifest)
 
@@ -293,7 +293,7 @@ def get_ws_config(ws):  # noqa: E302
     if _WS_CONFIG is None:
         config_path = get_ws_config_path(ws)
         with open(config_path, 'r') as f:
-            _WS_CONFIG = yaml.load(f, Loader=yaml.CBaseLoader)
+            _WS_CONFIG = yaml.safe_load(f)
             global _ORIG_WS_CONFIG
             # Save a copy of the config so we know later whether or not to
             # write it out when someone asks to sync the config.
