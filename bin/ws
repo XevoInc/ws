@@ -213,7 +213,7 @@ def main():
     cls = _SUBCMDS[args.subcmd]['cmd']
     try:
         cls.do(ws_dir, args)
-    except:
+    except:  # noqa: E722
         raise
     finally:
         # Init writes out the config, so we don't need to sync it.
