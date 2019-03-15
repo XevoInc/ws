@@ -143,7 +143,7 @@ manages:
 
 The syntax is as follows:
 ```
-includes:
+include:
     - some-other-manifest.yaml
 
 projects:

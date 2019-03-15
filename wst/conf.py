@@ -62,16 +62,16 @@ def parse_yaml(root, manifest):  # noqa: E302
         raise WSError('ws manifest %s not found' % manifest)
 
     try:
-        includes = d['includes']
+        includes = d['include']
     except KeyError:
         includes = ()
-        d['includes'] = includes
+        d['include'] = includes
     else:
         if not isinstance(includes, list):
-            raise WSError('includes key %s in %s is not a list'
+            raise WSError('"include" key %s in %s is not a list'
                           % (includes, manifest))
         if len(includes) == 0:
-            raise WSError('include in %s is an empty list!' % manifest)
+            raise WSError('"include" key in %s is an empty list!' % manifest)
 
     try:
         projects = d['projects']
@@ -147,7 +147,7 @@ def include_paths(d, manifest):
     '''Return the manifest absolute paths included from the given parsed
     manifest.'''
     try:
-        includes = d['includes']
+        includes = d['include']
     except KeyError:
         return ()
 
