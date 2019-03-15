@@ -74,11 +74,22 @@ def parse_yaml(root, manifest):  # noqa: E302
             raise WSError('"include" key in %s is an empty list!' % manifest)
 
     try:
+        search_paths = d['search-path']
+    except KeyError:
+        search_paths = ()
+        d['search-path'] = search_paths
+    else:
+        if not isinstance(search_paths, list):
+            raise WSError('"search-path" key %s in %s is not a list'
+                          % (search_paths, manifest))
+        if len(search_paths) == 0:
+            raise WSError('include in %s is an empty list!' % manifest)
+
+    try:
         projects = d['projects']
     except KeyError:
         if len(includes) == 0:
-            raise WSError('projects and includes keys missing in manifest %s'
-                          % manifest)
+            raise WSError('"projects" key missing in manifest %s' % manifest)
         else:
             return d
 
@@ -151,11 +162,32 @@ def include_paths(d, manifest):
     except KeyError:
         return ()
 
+    # The manifest's own directory is the default search path if none are
+    # specified.
+    search_paths = [os.path.realpath(os.path.join(manifest, os.pardir))]
+    try:
+        extra_search_paths = d['search-path']
+    except KeyError:
+        pass
+    else:
+        for path in extra_search_paths:
+            path = os.path.realpath(os.path.join(manifest, os.pardir, path))
+            search_paths.append(path)
+
     for i, path in enumerate(includes):
-        if path[0] != '/':
-            # Include is relative to the including manifest's parent directory.
-            parent = os.path.realpath(os.path.join(manifest, os.pardir))
-            includes[i] = os.path.realpath(os.path.join(parent, path))
+        if path[0] == '/':
+            # This is an absolute path, so no tweaking is necessary.
+            continue
+        found_match = False
+        for search_path in search_paths:
+            full_path = os.path.realpath(os.path.join(search_path, path))
+            if os.path.exists(full_path):
+                includes[i] = full_path
+                found_match = True
+                break
+        if not found_match:
+            raise WSError('cannot find manifest %s included by %s\n'
+                          'search paths: %s' % (path, manifest, search_paths))
 
     return includes
 
