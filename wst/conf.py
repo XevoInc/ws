@@ -174,22 +174,37 @@ def include_paths(d, manifest):
             path = os.path.realpath(os.path.join(manifest, os.pardir, path))
             search_paths.append(path)
 
+    tweaked_includes = []
     for i, path in enumerate(includes):
         if path[0] == '/':
             # This is an absolute path, so no tweaking is necessary.
+            tweaked_includes.append(path)
             continue
+
+        # Relative path, so try to match it using the search paths.
         found_match = False
         for search_path in search_paths:
             full_path = os.path.realpath(os.path.join(search_path, path))
             if os.path.exists(full_path):
-                includes[i] = full_path
                 found_match = True
                 break
         if not found_match:
             raise WSError('cannot find manifest %s included by %s\n'
                           'search paths: %s' % (path, manifest, search_paths))
 
-    return includes
+        # For directories, we include every file in the directory.
+        if os.path.isdir(full_path):
+            for filename in os.listdir(full_path):
+                if not (filename.endswith('.yaml') or filename.endswith('.yml')):  # noqa: E501
+                    continue
+                filepath = os.path.join(full_path, filename)
+                if not os.path.isfile(filepath):
+                    continue
+                tweaked_includes.append(filepath)
+        else:
+            tweaked_includes.append(full_path)
+
+    return tweaked_includes
 
 
 def merge_manifest(parent, parent_path, child, child_path):

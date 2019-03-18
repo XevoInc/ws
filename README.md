@@ -139,7 +139,8 @@ manages:
   modification.
 - Any other manifests that should be included. Include paths can be absolute or
   relative. If they are relative, they are interpreted relative to the parent
-  directory of the including manifest.
+  directory of the including manifest. Directories can also be included, in
+  which case every manifest file in the directory file is included.
 - Any search paths to search for manifests listed in "include". Can be either
   absolute or relative. If relative, it's relative to the parent directory of
   this manifest.
@@ -148,6 +149,7 @@ The syntax is as follows:
 ```
 include:
     - some-other-manifest.yaml
+    - some-directory-of-manifests
 
 search-path:
     - ../projects # a directory containing manifests
