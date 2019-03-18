@@ -47,6 +47,7 @@ setuptools.setup(
     install_requires=['PyYAML'],
     packages=setuptools.find_packages(),
     scripts=['bin/ws'],
+    data_files=[('share/bash-completion/completions', ['bash-completion/ws'])],
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Console',
                  'Intended Audience :: Developers',
