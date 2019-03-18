@@ -82,6 +82,16 @@ _complete_ws() {
             fi
             ;;
 
+        init)
+            if [[ $last == -s || $last == --manifest-source ]]; then
+                COMPREPLY=($(compgen -W "fs repo" -- $current))
+            elif [[ $last == -t || $last == --type ]]; then
+                COMPREPLY=($(compgen -W "debug release" -- $current))
+            else
+                COMPREPLY=($(compgen -W "-s -t -m" -- $current))
+            fi
+            ;;
+
         clean)
             # Fall through.
             ;&
