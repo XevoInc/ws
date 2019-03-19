@@ -68,13 +68,7 @@ _complete_ws() {
             local subcmds="init list rename remove default config clean build env"
             COMPREPLY=($(compgen -W "$subcmds" -- $current))
             ;;
-        rename)
-            # Fall through.
-            ;&
-        remove)
-            # Fall through.
-            ;&
-        default)
+        default|rename|remove)
             # Workspaces.
             local workspaces="$(ws list -w 2>/dev/null)"
             if [[ $posargs == 2 ]]; then
@@ -92,10 +86,7 @@ _complete_ws() {
             fi
             ;;
 
-        clean)
-            # Fall through.
-            ;&
-        build)
+        build|clean)
             # Projects.
             if [[ $posargs == 2 ]]; then
                 _ws_list_projects

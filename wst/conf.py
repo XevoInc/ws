@@ -361,6 +361,16 @@ def get_ws_config(ws):  # noqa: E302
     return _WS_CONFIG
 
 
+def _sync_file(f):
+    '''Syncs a file to disk in whichever way we have available.'''
+    # Not all systems have fdatasync. Empirically, the Mac appears not to have
+    # it.
+    if hasattr(os, 'fdatasync'):
+        os.fdatasync(f)
+    else:
+        os.fsync(f)
+
+
 def write_config(ws, config):
     '''Atomically updates the current ws config using the standard trick of
        writing to a tmp file in the same filesystem, syncing that file, and
@@ -370,7 +380,7 @@ def write_config(ws, config):
     with open(tmpfile, 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
         f.flush()
-        os.fdatasync(f)
+        _sync_file(f)
     os.rename(tmpfile, config_path)
 
     global _WS_CONFIG
