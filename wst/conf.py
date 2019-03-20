@@ -46,7 +46,7 @@ from wst.builder.meson import MesonBuilder
 from wst.builder.setuptools import SetuptoolsBuilder
 
 
-BUILD_TYPES = ('debug, release')
+BUILD_TYPES = ('debug', 'release')
 
 
 _REQUIRED_KEYS = {'build'}
