@@ -54,8 +54,7 @@ class CMakeBuilder(Builder):
             '-GNinja',
             '-DCMAKE_BUILD_TYPE=%s' % build_type,
             '-DCMAKE_INSTALL_PREFIX=%s' % prefix]
-        for opt in options:
-            cmd.extend(opt)
+        cmd.extend(options)
         cmd.append(source_dir)
         return call_configure(cmd, env=env, cwd=build_dir)
 

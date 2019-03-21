@@ -73,8 +73,7 @@ class SetuptoolsBuilder(Builder):
                'install',
                '--user',
                '--build=%s' % build_dir]
-        for opt in options:
-            cmd.extend(opt)
+        cmd.extend(options)
         cmd.append('.')
         return call_build(cmd, cwd=source_dir, env=env)
 
