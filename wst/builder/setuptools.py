@@ -25,7 +25,9 @@
 
 import os
 import sys
+from wst import WSError
 from wst.builder import Builder
+from wst.conf import DEFAULT_TARGETS
 from wst.shell import (
     call_build,
     rmtree
@@ -66,8 +68,11 @@ class SetuptoolsBuilder(Builder):
         return True
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env, options):
+    def build(cls, proj, prefix, source_dir, build_dir, env, targets, options):
         '''Calls build using setuptools.'''
+        if targets is not None and targets != DEFAULT_TARGETS:
+            raise WSError('pip3 does not support alternate build targets but '
+                          '"%s" was specified for targets' % targets)
         env['PYTHONUSERBASE'] = prefix
         cmd = ['pip3',
                'install',

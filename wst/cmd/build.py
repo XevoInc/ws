@@ -137,6 +137,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
         source_dir,
         build_dir,
         build_env,
+        d[proj]['targets'],
         d[proj]['options'])
     if success:
         set_stored_checksum(ws, proj, current)

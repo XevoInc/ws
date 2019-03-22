@@ -160,6 +160,10 @@ projects:
         deps:
             - gstreamer
             - ...
+        targets:
+            - test
+            - docs
+            - install
         env:
             GST_PLUGIN_PATH: ${LIBDIR}/gstreamer-1.0
 

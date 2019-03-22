@@ -41,16 +41,16 @@ from wst.shell import (
     remove
 )
 
-from wst.builder.cmake import CMakeBuilder
-from wst.builder.meson import MesonBuilder
-from wst.builder.setuptools import SetuptoolsBuilder
-
-
 BUILD_TYPES = ('debug', 'release')
+DEFAULT_TARGETS = ('install'),
+
+from wst.builder.cmake import CMakeBuilder  # noqa: E402
+from wst.builder.meson import MesonBuilder  # noqa: E402
+from wst.builder.setuptools import SetuptoolsBuilder  # noqa: E402
 
 
 _REQUIRED_KEYS = {'build'}
-_OPTIONAL_KEYS = {'deps', 'env', 'options'}
+_OPTIONAL_KEYS = {'deps', 'env', 'options', 'targets'}
 _ALL_KEYS = _REQUIRED_KEYS.union(_OPTIONAL_KEYS)
 def parse_yaml(root, manifest):  # noqa: E302
     '''Parses the given manifest for YAML and syntax correctness, or bails if
@@ -143,12 +143,29 @@ def parse_yaml(root, manifest):  # noqa: E302
                               proj)
             for opt in props['options']:
                 if not isinstance(opt, str):
-                    raise WSError('option %s in project %s must be a string' %
-                                  (opt, proj))
+                    raise WSError('option "%s" in project %s must be a string'
+                                  % (opt, proj))
             options = []
             for opt in props['options']:
                 options.extend(opt.split())
             props['options'] = options
+
+        try:
+            options = props['targets']
+        except KeyError:
+            props['targets'] = DEFAULT_TARGETS
+        else:
+            if props['targets'] is None:
+                props['targets'] = ()
+            else:
+                if not isinstance(props['targets'], list):
+                    raise WSError('"targets" key in project %s must be a list'
+                                  % proj)
+                for target in props['targets']:
+                    if not isinstance(target, str):
+                        raise WSError('target "%s" in project %s must be a '
+                                      'string' % (opt, proj))
+
         props['path'] = os.path.join(parent, proj)
 
     return d
