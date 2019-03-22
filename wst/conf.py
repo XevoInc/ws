@@ -96,12 +96,12 @@ def parse_yaml(root, manifest):  # noqa: E302
     for proj, props in projects.items():
         for prop in _REQUIRED_KEYS:
             if prop not in props:
-                raise WSError('%s key missing from project %s in manifest'
+                raise WSError('"%s" key missing from project %s in manifest'
                               % (prop, proj))
 
         for prop in props:
             if prop not in _ALL_KEYS:
-                raise WSError('unknown key %s for project %s specified in '
+                raise WSError('unknown key "%s" for project %s specified in '
                               'manifest' % (prop, proj))
 
     # Add computed keys.
@@ -113,7 +113,7 @@ def parse_yaml(root, manifest):  # noqa: E302
             props['deps'] = ()
         else:
             if not isinstance(deps, list):
-                raise WSError('deps key in project %s must be a list' % proj)
+                raise WSError('"deps" key in project %s must be a list' % proj)
             if len(set(deps)) != len(deps):
                 raise WSError('project %s has duplicate dependency' % proj)
 
@@ -123,14 +123,14 @@ def parse_yaml(root, manifest):  # noqa: E302
             props['env'] = {}
         else:
             if not isinstance(env, dict):
-                raise WSError('env key in project %s must be a dictionary'
+                raise WSError('"env" key in project %s must be a dictionary'
                               % proj)
             for k, v in env.items():
                 if not isinstance(k, str):
                     raise WSError('env key %s in project %s must be a string' %
                                   (k, proj))
                 if not isinstance(v, str):
-                    raise WSError('env value %s (key "%s") in project %s '
+                    raise WSError('env value "%s" (key "%s") in project %s '
                                   'must be a string' % (v, k, proj))
 
         try:
@@ -139,7 +139,7 @@ def parse_yaml(root, manifest):  # noqa: E302
             props['options'] = []
         else:
             if not isinstance(props['options'], list):
-                raise WSError('options key in project %s must be a list' %
+                raise WSError('"options" key in project %s must be a list' %
                               proj)
             for opt in props['options']:
                 if not isinstance(opt, str):
