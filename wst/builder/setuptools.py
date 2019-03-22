@@ -62,13 +62,13 @@ class SetuptoolsBuilder(Builder):
              build_dir,
              env,
              build_type,
-             options):
+             args):
         '''Calls configure using setuptools.'''
         # setuptools doesn't have a configure step.
         return True
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env, targets, options):
+    def build(cls, proj, prefix, source_dir, build_dir, env, targets, args):
         '''Calls build using setuptools.'''
         if targets is not None and targets != DEFAULT_TARGETS:
             raise WSError('pip3 does not support alternate build targets but '
@@ -78,7 +78,7 @@ class SetuptoolsBuilder(Builder):
                'install',
                '--user',
                '--build=%s' % build_dir]
-        cmd.extend(options)
+        cmd.extend(args)
         cmd.append('.')
         return call_build(cmd, cwd=source_dir, env=env)
 

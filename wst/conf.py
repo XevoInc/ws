@@ -50,7 +50,7 @@ from wst.builder.setuptools import SetuptoolsBuilder  # noqa: E402
 
 
 _REQUIRED_KEYS = {'build'}
-_OPTIONAL_KEYS = {'deps', 'env', 'options', 'targets'}
+_OPTIONAL_KEYS = {'deps', 'env', 'args', 'targets'}
 _ALL_KEYS = _REQUIRED_KEYS.union(_OPTIONAL_KEYS)
 def parse_yaml(root, manifest):  # noqa: E302
     '''Parses the given manifest for YAML and syntax correctness, or bails if
@@ -134,24 +134,23 @@ def parse_yaml(root, manifest):  # noqa: E302
                                   'must be a string' % (v, k, proj))
 
         try:
-            options = props['options']
+            args = props['args']
         except KeyError:
-            props['options'] = []
+            props['args'] = []
         else:
-            if not isinstance(props['options'], list):
-                raise WSError('"options" key in project %s must be a list' %
-                              proj)
-            for opt in props['options']:
+            if not isinstance(props['args'], list):
+                raise WSError('"args" key in project %s must be a list' % proj)
+            for opt in props['args']:
                 if not isinstance(opt, str):
                     raise WSError('option "%s" in project %s must be a string'
                                   % (opt, proj))
-            options = []
-            for opt in props['options']:
-                options.extend(opt.split())
-            props['options'] = options
+            args = []
+            for opt in props['args']:
+                args.extend(opt.split())
+            props['args'] = args
 
         try:
-            options = props['targets']
+            args = props['targets']
         except KeyError:
             props['targets'] = DEFAULT_TARGETS
         else:
@@ -363,7 +362,7 @@ def get_ws_config(ws):  # noqa: E302
             # write it out when someone asks to sync the config.
             _ORIG_WS_CONFIG = copy.deepcopy(_WS_CONFIG)
 
-    # Split all project arguments by spaces so that options like '-D something'
+    # Split all project arguments by spaces so that args like '-D something'
     # turn into ['-D', 'something'], which is what exec requires. We do this
     # at parse time rather than in the "config" command to allow the user to
     # hand-edit in a natural way and have the config still work properly. The

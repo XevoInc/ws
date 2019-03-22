@@ -169,7 +169,7 @@ projects:
 
     gstreamer:
         build: meson
-        options:
+        args:
             - -D gtk_doc=disabled
 ```
 

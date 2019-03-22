@@ -47,19 +47,19 @@ class CMakeBuilder(Builder):
              build_dir,
              env,
              build_type,
-             options):
+             args):
         '''Calls configure using CMake.'''
         cmd = [
             'cmake',
             '-GNinja',
             '-DCMAKE_BUILD_TYPE=%s' % build_type,
             '-DCMAKE_INSTALL_PREFIX=%s' % prefix]
-        cmd.extend(options)
+        cmd.extend(args)
         cmd.append(source_dir)
         return call_configure(cmd, env=env, cwd=build_dir)
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env, targets, options):
+    def build(cls, proj, prefix, source_dir, build_dir, env, targets, args):
         '''Calls build using CMake.'''
         return call_build(('ninja', '-C', build_dir) + targets, env=env)
 

@@ -38,7 +38,7 @@ class Builder(object):
         raise NotImplementedError
 
     @classmethod
-    def build(cls, proj, source_dir, build_dir, env, targets, options):
+    def build(cls, proj, source_dir, build_dir, env, targets, args):
         raise NotImplementedError
 
     @classmethod

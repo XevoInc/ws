@@ -114,7 +114,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
     # Configure.
     builder = get_builder(d, proj)
     prefix = get_install_dir(ws, proj)
-    extra_args = d[proj]['options'] + ws_config['projects'][proj]['args']
+    extra_args = d[proj]['args'] + ws_config['projects'][proj]['args']
     if needs_configure:
         success = builder.conf(
             proj,
@@ -138,7 +138,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
         build_dir,
         build_env,
         d[proj]['targets'],
-        d[proj]['options'])
+        d[proj]['args'])
     if success:
         set_stored_checksum(ws, proj, current)
 
