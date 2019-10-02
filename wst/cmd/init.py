@@ -118,8 +118,11 @@ class Init(Command):
                           % ws)
 
         if args.manifest_source == 'repo':
-            parent = os.path.realpath(os.path.join(root, os.pardir))
-            base = os.path.join(parent, '.repo', 'manifests')
+            parent = os.path.join(root, os.pardir)
+            repo_manifest = os.path.realpath(os.path.join(parent,
+                                                          '.repo',
+                                                          'manifest.xml'))
+            base = os.path.dirname(repo_manifest)
         elif args.manifest_source == 'fs':
             base = '.'
         else:
