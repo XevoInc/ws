@@ -332,7 +332,7 @@ def find_root(start_dir):
 
 def get_default_manifest_name():
     '''Returns the name of the default ws manifest.'''
-    return 'ws-manifest.yaml'
+    return 'ws.yaml'
 
 
 def get_ws_dir(root, ws):
