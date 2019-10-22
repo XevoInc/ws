@@ -131,7 +131,8 @@ Per-project settings
 ## ws manifest
 The `ws` manifest is a YAML file specifying a few things about the projects `ws`
 manages:
-- What build system they use (currently supports `meson` and `cmake`).
+- What build system they use (currently supports `meson`, `cmake`, and
+  `setuptools`).
 - What dependencies they have on other projects managed by `ws`.
 - Any special environment variables they need.
 - Any special builder options needed (e.g. `-DCMAKE_` type of options). These
