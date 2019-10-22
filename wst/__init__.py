@@ -27,6 +27,13 @@
 import logging
 
 
+# Constants used by multiple modules. Normally we would put these in conf, but
+# that can result in a circular import because conf imports builder.* and
+# builder.* imports conf.
+BUILD_TYPES = ('debug', 'release')
+DEFAULT_TARGETS = ('install'),
+
+
 class WSError(Exception):
     def __init__(self, msg):
         super().__init__(msg)

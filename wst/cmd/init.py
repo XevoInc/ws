@@ -26,10 +26,12 @@
 import errno
 import os
 
-from wst import WSError
+from wst import (
+    BUILD_TYPES,
+    WSError
+)
 from wst.cmd import Command
 from wst.conf import (
-    BUILD_TYPES,
     get_checksum_dir,
     get_default_ws_link,
     get_default_ws_name,

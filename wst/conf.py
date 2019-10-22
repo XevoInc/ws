@@ -31,6 +31,7 @@ import os
 import yaml
 
 from wst import (
+    DEFAULT_TARGETS,
     dry_run,
     log,
     WSError
@@ -40,9 +41,6 @@ from wst.shell import (
     call_output,
     remove
 )
-
-BUILD_TYPES = ('debug', 'release')
-DEFAULT_TARGETS = ('install'),
 
 from wst.builder.cmake import CMakeBuilder  # noqa: E402
 from wst.builder.meson import MesonBuilder  # noqa: E402

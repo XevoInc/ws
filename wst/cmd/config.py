@@ -26,12 +26,12 @@
 import yaml
 
 from wst import (
-    WSError,
-    log
+    BUILD_TYPES,
+    log,
+    WSError
 )
 from wst.cmd import Command
 from wst.conf import (
-    BUILD_TYPES,
     get_ws_config,
     parse_manifest
 )

@@ -25,9 +25,11 @@
 
 import os
 import sys
-from wst import WSError
+from wst import (
+    DEFAULT_TARGETS,
+    WSError
+)
 from wst.builder import Builder
-from wst.conf import DEFAULT_TARGETS
 from wst.shell import (
     call_build,
     rmtree
