@@ -9,8 +9,14 @@ than a replacing existing build tools, it merely automates the tedious task of
 manually specifying `--prefix`, setting env vars, and rebuilding projects in the
 right order when they change.
 
-Note that these tools do not directly handle source code syncing. That job is
-left to [repo](https://code.google.com/archive/p/git-repo/) and similar tools.
+Inside each workspace, projects are installed inside a localized `install`
+directory so that no installations ever leak out of a workspace. Projects
+dependent on other projects automatically link to the other projects' install
+directories by setting `PKG_CONFIG_PATH`, `LD_LIBRARY_PATH`, and everything else
+necessary.
+
+Note that `ws` does not directly handle source code syncing. That job is left to
+[repo](https://code.google.com/archive/p/git-repo/) and similar tools.
 
 ## Dependencies
 `ws` depends on the Python 3 PyYAML, which you can get either with `sudo apt
