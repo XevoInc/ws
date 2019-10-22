@@ -136,9 +136,9 @@ def parse_yaml(root, manifest):  # noqa: E302
         except KeyError:
             props['args'] = []
         else:
-            if not isinstance(props['args'], list):
+            if not isinstance(args, list):
                 raise WSError('"args" key in project %s must be a list' % proj)
-            for opt in props['args']:
+            for opt in args:
                 if not isinstance(opt, str):
                     raise WSError('option "%s" in project %s must be a string'
                                   % (opt, proj))
