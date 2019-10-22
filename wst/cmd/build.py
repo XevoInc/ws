@@ -88,7 +88,6 @@ def _build(root, ws, proj, d, current, ws_config, force):
 
     # Make the build directory if needed.
     build_dir = get_build_dir(ws, proj)
-    needs_configure = os.path.exists(build_dir)
     try:
         mkdir(build_dir)
     except OSError as e:
