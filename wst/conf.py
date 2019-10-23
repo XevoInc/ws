@@ -286,10 +286,14 @@ def parse_manifest_file(root, manifest):
     return projects
 
 
-def parse_manifest(root):
+_WS_MANIFEST = None
+def parse_manifest(root):  # noqa: E302
     '''Parses the ws manifest, returning a dictionary of the manifest data.'''
     # Parse.
-    return parse_manifest_file(root, get_manifest_link(root))
+    global _WS_MANIFEST
+    if _WS_MANIFEST is None:
+        _WS_MANIFEST = parse_manifest_file(root, get_manifest_link(root))
+    return _WS_MANIFEST
 
 
 def dependency_closure(d, projects):
@@ -345,6 +349,20 @@ def get_ws_config_path(ws):
     return os.path.join(ws, 'config.yaml')
 
 
+def get_ws_root(ws):
+    '''Returns the root (.ws directory) given a workspace path.'''
+    return os.path.realpath(os.path.join(ws, os.pardir))
+
+
+def get_new_config(proj):
+    '''Returns the dictionary representing the configuration for a newly-added
+    project that has never been built before.'''
+    return {'taint': False,
+            'enable': True,
+            'args': []
+            }
+
+
 _ORIG_WS_CONFIG = None
 _WS_CONFIG = None
 def get_ws_config(ws):  # noqa: E302
@@ -359,6 +377,22 @@ def get_ws_config(ws):  # noqa: E302
             # Save a copy of the config so we know later whether or not to
             # write it out when someone asks to sync the config.
             _ORIG_WS_CONFIG = copy.deepcopy(_WS_CONFIG)
+
+    # Check if projects were added or removed from the manifest. If so, the
+    # config needs to be updated accordingly.
+    d = parse_manifest(get_ws_root(ws))
+    deletions = []
+    for proj in _WS_CONFIG['projects']:
+        if proj not in d:
+            deletions.append(proj)
+    for proj in deletions:
+        del _WS_CONFIG['projects'][proj]
+
+    for proj in d:
+        if proj in _WS_CONFIG['projects']:
+            continue
+        # Project is not in the config, so add it in.
+        _WS_CONFIG['projects'][proj] = get_new_config(proj)
 
     # Split all project arguments by spaces so that args like '-D something'
     # turn into ['-D', 'something'], which is what exec requires. We do this

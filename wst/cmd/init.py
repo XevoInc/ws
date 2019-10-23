@@ -38,6 +38,7 @@ from wst.conf import (
     get_default_manifest_name,
     get_manifest_link,
     get_manifest_link_name,
+    get_new_config,
     get_toplevel_build_dir,
     get_ws_dir,
     parse_manifest_file,
@@ -179,9 +180,7 @@ class Init(Command):
 
             proj_map = dict((proj, {}) for proj in d)
             for proj in proj_map:
-                proj_map[proj]['taint'] = False
-                proj_map[proj]['enable'] = True
-                proj_map[proj]['args'] = []
+                proj_map[proj] = get_new_config(proj)
 
             config = {
                 'type': args.type,
