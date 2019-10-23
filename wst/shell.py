@@ -56,18 +56,26 @@ def rename(old, new):
         os.rename(old, new)
 
 
-def remove(path):
+def remove(path, fail_ok=False):
     '''Removes the given path.'''
     log('removing %s' % path)
     if not dry_run():
-        os.unlink(path)
+        try:
+            os.unlink(path)
+        except FileNotFoundError:
+            if not fail_ok:
+                raise
 
 
-def rmtree(path):
+def rmtree(path, fail_ok=False):
     '''Removes the given file or directory, recursively.'''
     log('recursively removing %s' % path)
     if not dry_run():
-        shutil.rmtree(path)
+        try:
+            shutil.rmtree(path)
+        except FileNotFoundError:
+            if not fail_ok:
+                raise
 
 
 def get_shell():
