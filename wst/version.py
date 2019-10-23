@@ -4,7 +4,7 @@
 # all "bump version" commits contained in one file and not mucking up the rest
 # of the code.
 #
-# Copyright (c) 2018 Xevo Inc. All rights reserved.
+# Copyright (c) 2018-2019 Xevo Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
