@@ -27,6 +27,7 @@ import collections
 import copy
 import errno
 import hashlib
+import logging
 import os
 import yaml
 
@@ -39,7 +40,8 @@ from wst import (
 from wst.shell import (
     call_git,
     call_output,
-    remove
+    remove,
+    rmtree
 )
 
 from wst.builder.cmake import CMakeBuilder  # noqa: E402
@@ -387,6 +389,12 @@ def get_ws_config(ws):  # noqa: E302
             deletions.append(proj)
     for proj in deletions:
         del _WS_CONFIG['projects'][proj]
+        checksum_file = get_checksum_file(ws, proj)
+        proj_dir = get_proj_dir(ws, proj)
+        log('removing project %s, which is not in the manifest' % proj,
+            logging.INFO)
+        remove(checksum_file, True)
+        rmtree(proj_dir, True)
 
     for proj in d:
         if proj in _WS_CONFIG['projects']:
