@@ -1,0 +1,6 @@
+- Refactor config to be more object-oriented instead of referring to directories
+  everywhere. Specifically:
+  - A root object, containing a manifest, a list of workspaces, etc.
+  - A Workspace object, containing config, projects list, etc.
+  This has the benefit of function arguments becoming simpler and avoiding
+  fragile dictionary-based lookups, as we could use object properties instead.
