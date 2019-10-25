@@ -725,7 +725,7 @@ def _merge_build_env(ws, d, proj, env, include_path):
     merge_var(env, 'PKG_CONFIG_PATH', pkgconfig_paths)
     merge_var(env, 'LD_LIBRARY_PATH', lib_paths)
     if include_path:
-        merge_var(env, 'PATH', [build_dir] + bin_dirs)
+        merge_var(env, 'PATH', bin_dirs)
 
     # Add in any builder-specific environment tweaks.
     install_dir = get_install_dir(ws, proj)
