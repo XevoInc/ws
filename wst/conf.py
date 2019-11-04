@@ -609,12 +609,13 @@ def get_stored_checksum(ws, proj):
 def calculate_checksum(source_dir):
     '''Calculates and returns the SHA-1 checksum of a given git directory,
     including submodules and dirty files. This function should uniquely
-    identify any source code that would impact the build but ignores files in
-    .gitignore, as they are assumed to have no impact on the build. If this is
-    not the case, it is likely a bug in the underlying project. Although we
-    could use the find command instead of git, it is much slower and takes into
-    account inconsequential files, like .cscope or .vim files that don't change
-    the build (and that are typically put in .gitignore).
+    identify any source code that would impact the build. Note that we ignore
+    files that have not been added to git but are in the git directory (files
+    on which you have not run "git add". If this is not the case, it is likely
+    a bug in the underlying project. Although we could use the find command
+    instead of git, it is much slower and takes into account inconsequential
+    files, like .cscope or .vim files that don't change the build (and that are
+    typically put in .gitignore).
 
     It is very important that this function is both fast and accurate, as it is
     used to determine when projects need to be rebuilt, and thus gets run
