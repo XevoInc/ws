@@ -34,6 +34,7 @@ from wst.cmd import Command
 from wst.conf import (
     get_build_dir,
     get_build_env,
+    merge_var,
     parse_manifest
 )
 from wst.shell import get_shell
@@ -77,6 +78,10 @@ class Env(Command):
 
         d = parse_manifest(args.root)
         build_env = get_build_env(ws, d, args.project, True)
+
+        # Add the build directory to the path for convenience of running
+        # non-installed binaries, such as unit tests.
+        merge_var(build_env, 'PATH', [build_dir])
 
         if len(args.command) > 0:
             cmd = args.command
