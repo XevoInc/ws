@@ -75,10 +75,9 @@ class SetuptoolsBuilder(Builder):
         if targets is not None and targets != DEFAULT_TARGETS:
             raise WSError('pip3 does not support alternate build targets but '
                           '"%s" was specified for targets' % targets)
-        env['PYTHONUSERBASE'] = prefix
         cmd = ['pip3',
                'install',
-               '--user',
+               '--prefix=%s' % prefix,
                '--build=%s' % build_dir]
         cmd.extend(args)
         cmd.append('.')
