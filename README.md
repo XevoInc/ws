@@ -130,7 +130,7 @@ Per-project settings
   build everything, but you might satisfy a particular dependency from the
   distro, or manually build and install it outside of the workspace.
 - `args`: sets build arguments for a particular project, which get directly passed
-  to the builder (e.g. `cmake` or `meson`). An exampe would be passing `-D
+  to the builder (e.g. `cmake` or `meson`). An example would be passing `-D
   KEY=VAL` to set a preprocessor variable.
 
 
