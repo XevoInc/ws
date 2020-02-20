@@ -115,19 +115,28 @@ def _build(root, ws, proj, d, current, ws_config, force):
     prefix = get_install_dir(ws, proj)
     extra_args = d[proj]['args'] + ws_config['projects'][proj]['args']
     if needs_configure:
-        success = builder.conf(
-            proj,
-            prefix,
-            source_dir,
-            build_dir,
-            build_env,
-            ws_config['type'],
-            extra_args)
+        try:
+            success = builder.conf(
+                proj,
+                prefix,
+                source_dir,
+                build_dir,
+                build_env,
+                ws_config['type'],
+                extra_args)
+        except Exception as _e:
+            success = False
+            e = _e
+        else:
+            e = None
         if not success:
             # Remove the build directory if we failed so that we are forced to
             # re-run configure next time.
             rmtree(build_dir)
-            return False
+            if e is not None:
+                raise e
+            else:
+                return False
 
     # Build.
     success = builder.build(
