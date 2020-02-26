@@ -31,25 +31,42 @@ from wst import (
 from wst.builder import Builder
 from wst.shell import (
     call_build,
+    call_output,
     rmtree
 )
+
+
+def get_site_packages_dir(python_exe):
+    '''Returns the site-packages directory for the given Python executable.'''
+    return call_output(
+        [python_exe,
+         '-c',
+         '\'import sysconfig;print(sysconfig.get_paths()[\"purelib\"])\''])
+
+
+def get_python_exe(builder_args):
+    '''Returns the Python executable to use.'''
+    try:
+        return builder_args['python-exe']
+    except KeyError:
+        import sys
+        return sys.executable
 
 
 class SetuptoolsBuilder(Builder):
     '''A setuptools builder.'''
 
-    import sysconfig
-    _SITE_PACKAGES_DIR = sysconfig.get_paths()['purelib']
-
     @classmethod
-    def env(cls, proj, prefix, build_dir, env):
+    def env(cls, proj, prefix, build_dir, env, builder_args):
         '''Sets up environment tweaks for setuptools.'''
         # Import here to prevent a circular import.
         from wst.conf import merge_var
 
         # setuptools won't install into a --prefix unless the site-packages
         # directory is in PYTHONPATH, so we'll add it in manually.
-        python_path = os.path.join(prefix, cls._SITE_PACKAGES_DIR)
+        python_path = os.path.join(
+            prefix,
+            get_site_packages_dir(get_python_exe(builder_args)))
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
@@ -60,18 +77,31 @@ class SetuptoolsBuilder(Builder):
              build_dir,
              env,
              build_type,
+             builder_args,
              args):
         '''Calls configure using setuptools.'''
         # setuptools doesn't have a configure step.
         return True
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env, targets, args):
+    def build(cls,
+              proj,
+              prefix,
+              source_dir,
+              build_dir,
+              env,
+              targets,
+              builder_args,
+              args):
         '''Calls build using setuptools.'''
         if targets is not None and targets != DEFAULT_TARGETS:
             raise WSError('pip3 does not support alternate build targets but '
                           '"%s" was specified for targets' % targets)
-        cmd = ['pip3',
+
+        python_exe = get_python_exe(builder_args)
+        cmd = [python_exe,
+               '-m',
+               'pip',
                'install',
                '--prefix=%s' % prefix,
                '--build=%s' % build_dir]
@@ -80,7 +110,7 @@ class SetuptoolsBuilder(Builder):
         return call_build(cmd, cwd=source_dir, env=env)
 
     @classmethod
-    def clean(cls, proj, prefix, source_dir, build_dir, env):
+    def clean(cls, proj, prefix, source_dir, build_dir, env, builder_args):
         '''Calls clean using setuptools.'''
         # setuptools appears not to have a nicer way to do a "make clean" on a
         # dev-installed package.

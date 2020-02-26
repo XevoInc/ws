@@ -75,7 +75,13 @@ def _polite_clean(root, ws, proj, d):
     build_env = get_build_env(ws, d, proj)
     prefix = get_install_dir(ws, proj)
     source_dir = get_source_dir(root, d, proj)
-    builder.clean(proj, prefix, source_dir, build_dir, build_env)
+    builder.clean(
+        proj,
+        prefix,
+        source_dir,
+        build_dir,
+        build_env,
+        d[proj]['builder-args'])
 
 
 def clean(root, ws, proj, d, force):

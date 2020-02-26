@@ -30,17 +30,38 @@ class Builder(object):
     system, such as CMake or meson. Since this is really an interface and not a
     class, all methods on it should be class methods.'''
     @classmethod
-    def env(cls, proj, prefix, build_dir, source_dir, env, build_type):
+    def env(cls,
+            proj,
+            prefix,
+            build_dir,
+            source_dir,
+            env,
+            build_type,
+            builder_args):
         raise NotImplementedError
 
     @classmethod
-    def conf(cls, proj, prefix, build_dir, source_dir, env, build_type):
+    def conf(cls,
+             proj,
+             prefix,
+             build_dir,
+             source_dir,
+             env,
+             build_type,
+             builder_args):
         raise NotImplementedError
 
     @classmethod
-    def build(cls, proj, source_dir, build_dir, env, targets, args):
+    def build(cls,
+              proj,
+              source_dir,
+              build_dir,
+              env,
+              targets,
+              builder_args,
+              args):
         raise NotImplementedError
 
     @classmethod
-    def clean(cls, proj, build_dir, env):
+    def clean(cls, proj, build_dir, env, builder_args):
         raise NotImplementedError

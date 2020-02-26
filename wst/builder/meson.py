@@ -34,7 +34,7 @@ from wst.shell import (
 class MesonBuilder(Builder):
     '''A meson builder.'''
     @classmethod
-    def env(cls, proj, prefix, build_dir, env):
+    def env(cls, proj, prefix, build_dir, env, builder_args):
         '''Sets up environment tweaks for meson.'''
         pass
 
@@ -46,6 +46,7 @@ class MesonBuilder(Builder):
              build_dir,
              env,
              build_type,
+             builder_args,
              args):
         '''Calls configure using Meson.'''
         cmd = [
@@ -58,11 +59,19 @@ class MesonBuilder(Builder):
         return call_configure(cmd, env=env)
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env, targets, args):
+    def build(cls,
+              proj,
+              prefix,
+              source_dir,
+              build_dir,
+              env,
+              targets,
+              builder_args,
+              args):
         '''Calls build using the Meson build itself.'''
         return call_build(('ninja', '-C', build_dir) + targets, env=env)
 
     @classmethod
-    def clean(cls, proj, prefix, source_dir, build_dir, env):
+    def clean(cls, proj, prefix, source_dir, build_dir, env, builder_args):
         '''Calls clean using the Meson build itself.'''
         return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)

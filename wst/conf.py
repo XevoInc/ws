@@ -50,7 +50,7 @@ from wst.builder.setuptools import SetuptoolsBuilder  # noqa: E402
 
 
 _REQUIRED_KEYS = {'build'}
-_OPTIONAL_KEYS = {'deps', 'env', 'args', 'targets'}
+_OPTIONAL_KEYS = {'deps', 'env', 'args', 'builder-args', 'targets'}
 _ALL_KEYS = _REQUIRED_KEYS.union(_OPTIONAL_KEYS)
 def parse_yaml(root, manifest):  # noqa: E302
     '''Parses the given manifest for YAML and syntax correctness, or bails if
@@ -164,6 +164,20 @@ def parse_yaml(root, manifest):  # noqa: E302
                     if not isinstance(target, str):
                         raise WSError('target "%s" in project %s must be a '
                                       'string' % (opt, proj))
+
+        try:
+            builder_args = props['builder-args']
+        except KeyError:
+            props['builder-args'] = {}
+            builder_args = props['builder-args']
+        else:
+            if not isinstance(builder_args, dict):
+                raise WSError('"builder-args" key in project %s must be a '
+                              'list' % proj)
+            for builder_arg in builder_args:
+                if not isinstance(builder_arg, str):
+                    raise WSError('builder arg "%s" in project %s must be '
+                                  'a string' % (builder_arg, proj))
 
         props['path'] = os.path.join(parent, proj)
 
@@ -730,7 +744,12 @@ def _merge_build_env(ws, d, proj, env, include_path):
 
     # Add in any builder-specific environment tweaks.
     install_dir = get_install_dir(ws, proj)
-    get_builder(d, proj).env(proj, install_dir, build_dir, env)
+    get_builder(d, proj).env(
+        proj,
+        install_dir,
+        build_dir,
+        env,
+        d[proj]['builder-args'])
 
     # Add in any project-specific environment variables specified in the
     # manifest.

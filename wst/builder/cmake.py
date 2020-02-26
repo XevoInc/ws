@@ -35,7 +35,7 @@ from wst.shell import (
 class CMakeBuilder(Builder):
     '''A CMake builder.'''
     @classmethod
-    def env(cls, proj, prefix, build_dir, env):
+    def env(cls, proj, prefix, build_dir, env, builder_args):
         '''Sets up environment tweaks for cmake.'''
         pass
 
@@ -47,6 +47,7 @@ class CMakeBuilder(Builder):
              build_dir,
              env,
              build_type,
+             builder_args,
              args):
         '''Calls configure using CMake.'''
         cmd = [
@@ -59,11 +60,19 @@ class CMakeBuilder(Builder):
         return call_configure(cmd, env=env, cwd=build_dir)
 
     @classmethod
-    def build(cls, proj, prefix, source_dir, build_dir, env, targets, args):
+    def build(cls,
+              proj,
+              prefix,
+              source_dir,
+              build_dir,
+              env,
+              targets,
+              builder_args,
+              args):
         '''Calls build using CMake.'''
         return call_build(('ninja', '-C', build_dir) + targets, env=env)
 
     @classmethod
-    def clean(cls, proj, prefix, source_dir, build_dir, env):
+    def clean(cls, proj, prefix, source_dir, build_dir, env, builder_args):
         '''Calls clean using CMake.'''
         return call_clean(('ninja', '-C', build_dir, 'clean'), env=env)

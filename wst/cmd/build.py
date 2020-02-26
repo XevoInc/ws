@@ -123,6 +123,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
                 build_dir,
                 build_env,
                 ws_config['type'],
+                d[proj]['builder-args'],
                 extra_args)
         except Exception as _e:
             success = False
@@ -146,6 +147,7 @@ def _build(root, ws, proj, d, current, ws_config, force):
         build_dir,
         build_env,
         d[proj]['targets'],
+        d[proj]['builder-args'],
         d[proj]['args'])
     if success:
         set_stored_checksum(ws, proj, current)
