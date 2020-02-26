@@ -24,7 +24,6 @@
 #
 
 import os
-import sys
 from wst import (
     DEFAULT_TARGETS,
     WSError
@@ -39,10 +38,8 @@ from wst.shell import (
 class SetuptoolsBuilder(Builder):
     '''A setuptools builder.'''
 
-    _PYTHON_LIB_DIR = os.path.join(
-        'lib',
-        'python%d.%d' % (sys.version_info[0], sys.version_info[1]),
-        'site-packages')
+    import sysconfig
+    _SITE_PACKAGES_DIR = sysconfig.get_paths()['purelib']
 
     @classmethod
     def env(cls, proj, prefix, build_dir, env):
@@ -50,10 +47,9 @@ class SetuptoolsBuilder(Builder):
         # Import here to prevent a circular import.
         from wst.conf import merge_var
 
-        # setuptools won't install into a --prefix unless
-        # PREFIX/lib/pythonX.Y/site-packages is in PYTHONPATH, so we'll add it
-        # in manually.
-        python_path = os.path.join(prefix, cls._PYTHON_LIB_DIR)
+        # setuptools won't install into a --prefix unless the site-packages
+        # directory is in PYTHONPATH, so we'll add it in manually.
+        python_path = os.path.join(prefix, cls._SITE_PACKAGES_DIR)
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
