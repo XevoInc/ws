@@ -32,8 +32,17 @@ from wst import (
 from wst.builder import Builder
 from wst.shell import (
     call_build,
+    call_output,
     rmtree
 )
+
+
+def get_python_version(python_exe):
+    '''Returns the Python version of the given executable.'''
+    cmd = 'import sys;print("%d.%d" % (sys.version_info[0], sys.version_info[1]))'  # noqa: E501
+    ver_str = call_output((python_exe, '-c', cmd))
+    split = ver_str.rstrip().split('.')
+    return (int(split[0]), int(split[1]))
 
 
 def get_python_exe(builder_args):
@@ -41,17 +50,19 @@ def get_python_exe(builder_args):
     try:
         return builder_args['python-exe']
     except KeyError:
-        import sys
         return sys.executable
+
+
+def get_python_lib_dir(builder_args):
+    '''Returns the library directory (which needs to be added to PYTHONPATH)
+    for the given Python executable. This is relative to PREFIX.'''
+    python_exe = get_python_exe(builder_args)
+    python_version = get_python_version(python_exe)
+    return os.path.join('lib', 'python%d.%d' % python_version, 'site-packages')
 
 
 class SetuptoolsBuilder(Builder):
     '''A setuptools builder.'''
-
-    _PYTHON_LIB_DIR = os.path.join(
-        'lib',
-        'python%d.%d' % (sys.version_info[0], sys.version_info[1]),
-        'site-packages')
 
     @classmethod
     def env(cls, proj, prefix, build_dir, env, builder_args):
@@ -62,7 +73,8 @@ class SetuptoolsBuilder(Builder):
         # setuptools won't install into a --prefix unless
         # PREFIX/lib/pythonX.Y/site-packages is in PYTHONPATH, so we'll add it
         # in manually.
-        python_path = os.path.join(prefix, cls._PYTHON_LIB_DIR)
+        python_lib_dir = get_python_lib_dir(builder_args)
+        python_path = os.path.join(prefix, python_lib_dir)
         merge_var(env, 'PYTHONPATH', [python_path])
 
     @classmethod
