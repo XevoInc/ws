@@ -77,7 +77,7 @@ class Env(Command):
                           'built it yet?' % args.project)
 
         d = parse_manifest(args.root)
-        build_env = get_build_env(ws, d, args.project, True)
+        build_env = get_build_env(ws, d, args.project)
 
         # Add the build directory to the path for convenience of running
         # non-installed binaries, such as unit tests.
