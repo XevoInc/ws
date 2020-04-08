@@ -198,7 +198,7 @@ class Build(Command):
         checksums = pool.map(calculate_checksum, src_dirs)
 
         for i, proj in enumerate(order):
-            logging.info('building %s' % proj)
+            log('building %s' % proj)
             checksum = checksums[i]
             success = _build(
                 args.root,
