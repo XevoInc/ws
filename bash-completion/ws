@@ -86,7 +86,7 @@ _complete_ws() {
             fi
             ;;
 
-        build|clean)
+        build|test|clean)
             # Projects.
             if [[ $posargs == 2 ]]; then
                 _ws_list_projects

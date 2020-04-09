@@ -118,7 +118,15 @@ seems wrong.
 An example use of `ws env` is to manually build something or to tweak the build
 configuration of a given project in a way that `ws` doesn't know how to handle.
 
+### ws test
+
+`ws test` allows you to run unit tests on a project that you built. The tests
+are configured in the `ws` manifest  file and can be any set of arbitrary
+commands. The tests will be run from the build directory of the project as if
+you had run `ws env -b PROJECT TEST`.
+
 ### ws config
+
 `ws config` sets either workspace-wide or per-project configuration settings.
 The following settings are supported:
 
@@ -168,11 +176,18 @@ projects:
             - gstreamer
             - ...
         targets:
-            - test
             - docs
             - install
         env:
             GST_PLUGIN_PATH: ${LIBDIR}/gstreamer-1.0
+        tests:
+            - some test command here
+            - some other test command here
+            - cwd: ${SRCDIR}
+              cmds:
+                  - these commands
+                  - will be run from the source directory
+                  - instead of the build directory
 
     gstreamer:
         build: meson

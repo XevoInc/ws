@@ -42,6 +42,7 @@ import wst.cmd.env
 import wst.cmd.init
 import wst.cmd.list
 import wst.cmd.remove
+import wst.cmd.test
 import wst.cmd.rename
 from wst.conf import (
     find_root,
@@ -92,6 +93,10 @@ _SUBCMDS = {
     'build': {
         'friendly': 'Build project or workspace',
         'cmd': wst.cmd.build.Build
+    },
+    'test': {
+        'friendly': 'Test project or workspace',
+        'cmd': wst.cmd.test.Test
     },
     'env': {
         'friendly': 'Run command in the workspace environment',

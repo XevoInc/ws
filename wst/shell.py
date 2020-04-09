@@ -132,6 +132,11 @@ def call_build(cmd, **kwargs):
     return call_noexcept('build', cmd, **kwargs)
 
 
+def call_test(cmd, **kwargs):
+    '''Executes a test command.'''
+    return call_noexcept('test', cmd, **kwargs)
+
+
 def call_clean(cmd, **kwargs):
     '''Executes a clean command.'''
     return call_noexcept('clean', cmd, **kwargs)

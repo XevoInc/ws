@@ -50,7 +50,7 @@ from wst.builder.setuptools import SetuptoolsBuilder  # noqa: E402
 
 
 _REQUIRED_KEYS = {'build'}
-_OPTIONAL_KEYS = {'deps', 'env', 'args', 'builder-args', 'targets'}
+_OPTIONAL_KEYS = {'deps', 'env', 'args', 'builder-args', 'targets', 'tests'}
 _ALL_KEYS = _REQUIRED_KEYS.union(_OPTIONAL_KEYS)
 def parse_yaml(root, manifest):  # noqa: E302
     '''Parses the given manifest for YAML and syntax correctness, or bails if
@@ -178,6 +178,42 @@ def parse_yaml(root, manifest):  # noqa: E302
                 if not isinstance(builder_arg, str):
                     raise WSError('builder arg "%s" in project %s must be '
                                   'a string' % (builder_arg, proj))
+
+        try:
+            tests = props['tests']
+        except KeyError:
+            props['tests'] = []
+            tests = props['tests']
+        else:
+            if not isinstance(tests, list):
+                raise WSError('"tests" key in project %s must be a list'
+                              % proj)
+            for i, test in enumerate(tests):
+                if isinstance(test, str):
+                    cwd = '${BUILDDIR}'
+                    cmds = [test]
+                elif isinstance(test, dict):
+                    try:
+                        cwd = test['cwd']
+                    except KeyError:
+                        raise WSError('test "%s" in project %s is missing the '
+                                      '"cwd" key' % (test, proj))
+                    try:
+                        cmds = test['cmds']
+                    except KeyError:
+                        raise WSError('test "%s" in project %s is missing the '
+                                      '"cmds" key' % (test, proj))
+                    if not isinstance(cmds, list):
+                        raise WSError('test "cmds" key "%s" in project %s is '
+                                      'not a list' % (cmds, proj))
+                    for cmd in cmds:
+                        if not isinstance(cmd, str):
+                            raise WSError('test command "%s" in project %s is '
+                                          'not a string' % (cmd, proj))
+                else:
+                    raise WSError('test "%s" in project %s must be '
+                                  'a string or dictionary' % (test, proj))
+                tests[i] = {'cwd': cwd, 'cmds': cmds}
 
         props['path'] = os.path.join(parent, proj)
 
@@ -728,22 +764,43 @@ def expand_var(s, var, expansions):
     return ':'.join(results)
 
 
+def expand_vars(val, ws, proj, env):
+    '''Expand string using all supported variable templates.'''
+    build_dir = get_build_dir(ws, proj)
+    val = expand_var(val, 'BUILDDIR', [build_dir])
+
+    source_dir = os.path.realpath(get_source_link(ws, proj))
+    val = expand_var(val, 'SRCDIR', [source_dir])
+
+    lib_paths = get_lib_paths(ws, proj)
+    val = expand_var(val, 'LIBDIR', lib_paths)
+
+    install_dir = get_install_dir(ws, proj)
+    val = expand_var(val, 'PREFIX', [install_dir])
+
+    # Expand every environment variable.
+    for k, v in env.items():
+        val = expand_var(val, k, [v])
+
+    return val
+
+
 def _merge_build_env(ws, d, proj, env):
     '''Merges the build environment for a single project into the given env.
     This is a helper function called by get_build_env for each dependency of a
     given project.'''
-    build_dir = get_build_dir(ws, proj)
-    source_dir = os.path.realpath(get_source_link(ws, proj))
-    bin_dirs = get_bin_paths(ws, proj)
-
     pkgconfig_paths = get_pkgconfig_paths(ws, proj)
-    lib_paths = get_lib_paths(ws, proj)
     merge_var(env, 'PKG_CONFIG_PATH', pkgconfig_paths)
+
+    lib_paths = get_lib_paths(ws, proj)
     merge_var(env, 'LD_LIBRARY_PATH', lib_paths)
+
+    bin_dirs = get_bin_paths(ws, proj)
     merge_var(env, 'PATH', bin_dirs)
 
     # Add in any builder-specific environment tweaks.
     install_dir = get_install_dir(ws, proj)
+    build_dir = get_build_dir(ws, proj)
     get_builder(d, proj).env(
         proj,
         install_dir,
@@ -754,13 +811,7 @@ def _merge_build_env(ws, d, proj, env):
     # Add in any project-specific environment variables specified in the
     # manifest.
     for var, val in d[proj]['env'].items():
-        val = expand_var(val, 'BUILDDIR', [build_dir])
-        val = expand_var(val, 'SRCDIR', [source_dir])
-        val = expand_var(val, 'LIBDIR', lib_paths)
-        val = expand_var(val, 'PREFIX', [install_dir])
-        # Expand every environment variable.
-        for k, v in env.items():
-            val = expand_var(val, k, [v])
+        val = expand_vars(val, ws, proj, env)
         merge_var(env, var, [val])
 
 
