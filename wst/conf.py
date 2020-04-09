@@ -733,6 +733,7 @@ def _merge_build_env(ws, d, proj, env):
     This is a helper function called by get_build_env for each dependency of a
     given project.'''
     build_dir = get_build_dir(ws, proj)
+    source_dir = os.path.realpath(get_source_link(ws, proj))
     bin_dirs = get_bin_paths(ws, proj)
 
     pkgconfig_paths = get_pkgconfig_paths(ws, proj)
@@ -753,6 +754,8 @@ def _merge_build_env(ws, d, proj, env):
     # Add in any project-specific environment variables specified in the
     # manifest.
     for var, val in d[proj]['env'].items():
+        val = expand_var(val, 'BUILDDIR', [build_dir])
+        val = expand_var(val, 'SRCDIR', [source_dir])
         val = expand_var(val, 'LIBDIR', lib_paths)
         val = expand_var(val, 'PREFIX', [install_dir])
         # Expand every environment variable.

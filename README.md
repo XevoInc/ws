@@ -187,6 +187,8 @@ be filled in with the library path for the project.
 
 Here is the complete list of usable template variables:
 ```
+- ${BUILDDIR}: the project build directory
+- ${SRCDIR}: the project source directory (top of the project's git repository)
 - ${LIBDIR}: the library path for the project (what `LD_LIBRARY_PATH` will be
   set to for the project's build environment.
 - ${PREFIX}: the project's prefix (what you would pass to `--prefix`).
