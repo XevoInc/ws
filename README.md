@@ -124,6 +124,10 @@ are configured in the `ws` manifest  file and can be any set of arbitrary
 commands. The tests will be run from the build directory of the project as if
 you had run `ws env -b PROJECT TEST`.
 
+The `cwd` paremeter to the tests allows tests to run in an alternate directory
+that the build directory. Any of the template variables listed below can be used
+for this.
+
 ### ws config
 `ws config` sets either workspace-wide or per-project configuration settings.
 The following settings are supported:
