@@ -53,6 +53,18 @@ def get_python_exe(builder_args):
         return sys.executable
 
 
+def get_package_extras(builder_args):
+    '''Returns the extras that should be installed with this package.'''
+    try:
+        extras = builder_args['extras']
+    except KeyError:
+        return ''
+
+    if not isinstance(extras, list):
+        raise ValueError('builder_args.extras must be a list, got %r' % type())
+
+    return '[' + ','.join(extras) + ']'
+
 def get_python_lib_dir(builder_args):
     '''Returns the library directory (which needs to be added to PYTHONPATH)
     for the given Python executable. This is relative to PREFIX.'''
@@ -114,7 +126,11 @@ class SetuptoolsBuilder(Builder):
                '--prefix=%s' % prefix,
                '--build=%s' % build_dir]
         cmd.extend(args)
-        cmd.append('.')
+
+        path = '.'
+        path += get_package_extras(builder_args)
+
+        cmd.append(path)
         return call_build(cmd, cwd=source_dir, env=env)
 
     @classmethod
